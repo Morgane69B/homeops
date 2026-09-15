@@ -10,6 +10,7 @@ const badgeVariants = cva(
         indigo: "bg-indigo-soft text-indigo",
         emerald: "bg-emerald-soft text-emerald",
         coral: "bg-coral-soft text-coral",
+        amber: "bg-amber/15 text-amber",
         neutral: "bg-slate-900/5 dark:bg-white/10 text-muted",
       },
     },
