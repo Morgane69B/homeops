@@ -1,0 +1,197 @@
+// Onboarding Express — schéma de base de données simplifié pour le MVP.
+// npm i -D prisma && npm i @prisma/client, puis `npx prisma migrate dev`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrgType {
+  RESTAURANT
+  HOTEL
+  RETAIL
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  EMPLOYEE
+}
+
+enum ModuleType {
+  QUIZ
+  FLASHCARD
+  VIDEO
+}
+
+enum AssignmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  LATE
+}
+
+// Un restaurant / hôtel / commerce client du SaaS. Toutes les données
+// métier sont scopées par organizationId (isolation multi-tenant).
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  type      OrgType
+  createdAt DateTime @default(now())
+
+  users       User[]
+  tracks      Track[]
+  badges      Badge[]
+
+  @@map("organizations")
+}
+
+// Un compte : propriétaire/manager (crée les parcours, suit l'équipe)
+// ou employé (suit les modules assignés).
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  email     String   @unique
+  name      String
+  role      UserRole
+  jobTitle  String?
+  points    Int      @default(0)
+  hiredAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  assignments Assignment[]
+  attempts    Attempt[]
+  userBadges  UserBadge[]
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+// Un parcours d'onboarding (ex: "Service en salle"), composé de modules,
+// rattaché à un poste cible.
+model Track {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  title          String
+  description    String?
+  targetJobTitle String?
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  modules     Module[]
+  assignments Assignment[]
+
+  @@index([organizationId])
+  @@map("tracks")
+}
+
+// Une unité de micro-learning (quiz ou flashcards) appartenant à un parcours.
+model Module {
+  id      String     @id @default(cuid())
+  trackId String
+  track   Track      @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  title            String
+  type             ModuleType
+  order            Int        @default(0)
+  estimatedMinutes Int        @default(5)
+  pointsReward     Int        @default(100)
+  content          Json?      // flashcards ou contenu additionnel (front/back[])
+
+  questions Question[]
+  attempts  Attempt[]
+
+  @@index([trackId])
+  @@map("modules")
+}
+
+// Une question à choix multiple d'un module de type QUIZ.
+model Question {
+  id       String @id @default(cuid())
+  moduleId String
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  prompt       String
+  choices      Json    // string[]
+  correctIndex Int
+  explanation  String?
+  order        Int     @default(0)
+
+  @@index([moduleId])
+  @@map("questions")
+}
+
+// L'assignation d'un parcours à un employé par un manager, avec échéance.
+model Assignment {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId String
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  assignedById String
+  dueDate      DateTime?
+  status       AssignmentStatus @default(NOT_STARTED)
+  createdAt    DateTime         @default(now())
+
+  @@unique([userId, trackId])
+  @@index([userId])
+  @@index([trackId])
+  @@map("assignments")
+}
+
+// Le résultat d'une tentative d'un employé sur un module (score, points).
+model Attempt {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId String
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  scorePct     Int // 0-100
+  pointsEarned Int
+  durationSec  Int?
+  completedAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([moduleId])
+  @@map("attempts")
+}
+
+// Un badge de gamification définissable par organisation (ou global si
+// organizationId est nul, pour les badges livrés par défaut avec le SaaS).
+model Badge {
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  code        String  @unique
+  title       String
+  description String
+  icon        String  @default("award")
+
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+// Table de liaison : un badge obtenu par un employé.
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
