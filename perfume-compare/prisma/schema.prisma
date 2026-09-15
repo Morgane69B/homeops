@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Gender {
+  HOMME
+  FEMME
+  MIXTE
+}
+
+enum Concentration {
+  EXTRAIT_DE_PARFUM
+  EAU_DE_PARFUM
+  EAU_DE_TOILETTE
+  EAU_DE_COLOGNE
+}
+
+enum NoteCategory {
+  HEAD
+  HEART
+  BASE
+}
+
+// --- Auth (NextAuth / Auth.js Prisma adapter) ---
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+
+  accounts Account[]
+  sessions Session[]
+  wishlist WishlistItem[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Catalogue ---
+
+model OlfactoryFamily {
+  id          String @id @default(cuid())
+  name        String @unique
+  slug        String @unique
+  description String
+
+  perfumes Perfume[]
+}
+
+model Note {
+  id       String       @id @default(cuid())
+  name     String       @unique
+  category NoteCategory
+
+  perfumes Perfume[]
+}
+
+model Perfume {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  name            String
+  brand           String
+  gender          Gender
+  concentration   Concentration
+  description     String
+  imageUrl        String?
+  image3dModelUrl String?
+  createdAt       DateTime      @default(now())
+
+  mainFamilyId String
+  mainFamily   OlfactoryFamily @relation(fields: [mainFamilyId], references: [id])
+
+  notes        Note[]
+  offers       PriceOffer[]
+  wishlistedBy WishlistItem[]
+  articles     Article[]
+}
+
+model Merchant {
+  id      String @id @default(cuid())
+  name    String @unique
+  logoUrl String?
+  siteUrl String
+
+  offers PriceOffer[]
+}
+
+model PriceOffer {
+  id           String   @id @default(cuid())
+  price        Decimal  @db.Decimal(10, 2)
+  volumeMl     Int
+  stock        Boolean  @default(true)
+  affiliateUrl String
+  updatedAt    DateTime @updatedAt
+
+  perfumeId  String
+  perfume    Perfume  @relation(fields: [perfumeId], references: [id], onDelete: Cascade)
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([perfumeId, merchantId, volumeMl])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  perfumeId String
+  perfume   Perfume @relation(fields: [perfumeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, perfumeId])
+}
+
+// --- Blog ---
+
+model Article {
+  id         String   @id @default(cuid())
+  title      String
+  slug       String   @unique
+  content    String
+  excerpt    String
+  coverImage String?
+  createdAt  DateTime @default(now())
+
+  perfumes Perfume[]
+}
