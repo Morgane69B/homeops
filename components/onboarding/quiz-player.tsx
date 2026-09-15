@@ -7,22 +7,21 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { CompletionScreen } from "@/components/onboarding/completion-screen";
-import { useOnboardingStore } from "@/lib/onboarding-store";
-import { badges as badgeDefs } from "@/data/onboarding";
+import { submitModuleAttemptAction } from "@/lib/onboarding-actions";
 import { cn } from "@/lib/utils";
-import type { LearningModule } from "@/types/onboarding";
+import type { BadgeDef, LearningModule } from "@/types/onboarding";
 
 export function QuizPlayer({ employeeId, learningModule }: { employeeId: string; learningModule: LearningModule }) {
   const questions = learningModule.questions ?? [];
-  const submitModuleAttempt = useOnboardingStore((s) => s.submitModuleAttempt);
 
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
   const [finished, setFinished] = useState(false);
   const [result, setResult] = useState<{
     pointsEarned: number;
-    newlyEarnedBadgeIds: string[];
+    newBadges: BadgeDef[];
     passed: boolean;
     scorePct: number;
   } | null>(null);
@@ -39,8 +38,8 @@ export function QuizPlayer({ employeeId, learningModule }: { employeeId: string;
     setResult(null);
   }
 
-  function handleSelect(choiceIndex: number) {
-    if (hasAnswered) return;
+  async function handleSelect(choiceIndex: number) {
+    if (hasAnswered || submitting) return;
     setSelected(choiceIndex);
     const isCorrect = choiceIndex === question.correctIndex;
     const nextCorrect = correctCount + (isCorrect ? 1 : 0);
@@ -48,8 +47,10 @@ export function QuizPlayer({ employeeId, learningModule }: { employeeId: string;
 
     if (isLast) {
       const scorePct = Math.round((nextCorrect / questions.length) * 100);
-      const res = submitModuleAttempt(employeeId, learningModule.id, scorePct);
-      setResult({ ...res, scorePct });
+      setSubmitting(true);
+      const res = await submitModuleAttemptAction(employeeId, learningModule.id, scorePct);
+      setSubmitting(false);
+      setResult(res);
     }
   }
 
@@ -69,7 +70,8 @@ export function QuizPlayer({ employeeId, learningModule }: { employeeId: string;
         scorePct={result.scorePct}
         passed={result.passed}
         pointsEarned={result.pointsEarned}
-        newBadges={badgeDefs.filter((b) => result.newlyEarnedBadgeIds.includes(b.id))}
+        newBadges={result.newBadges}
+        employeeId={employeeId}
         onRetry={reset}
       />
     );
@@ -137,8 +139,8 @@ export function QuizPlayer({ employeeId, learningModule }: { employeeId: string;
         </motion.div>
       </AnimatePresence>
 
-      <Button className="mt-4 w-full" size="lg" disabled={!hasAnswered} onClick={handleNext}>
-        {isLast ? "Voir mes résultats" : "Question suivante"}
+      <Button className="mt-4 w-full" size="lg" disabled={!hasAnswered || submitting} onClick={handleNext}>
+        {submitting ? "Enregistrement…" : isLast ? "Voir mes résultats" : "Question suivante"}
       </Button>
     </div>
   );

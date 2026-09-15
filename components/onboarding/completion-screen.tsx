@@ -13,6 +13,7 @@ export function CompletionScreen({
   passed,
   pointsEarned,
   newBadges,
+  employeeId,
   onRetry,
 }: {
   moduleTitle: string;
@@ -20,6 +21,7 @@ export function CompletionScreen({
   passed: boolean;
   pointsEarned: number;
   newBadges: BadgeDef[];
+  employeeId: string;
   onRetry: () => void;
 }) {
   return (
@@ -90,7 +92,7 @@ export function CompletionScreen({
               </Button>
             )}
             <Button asChild>
-              <Link href="/onboarding-express/employe">Retour à mon parcours</Link>
+              <Link href={`/onboarding-express/employe?as=${employeeId}`}>Retour à mon parcours</Link>
             </Button>
           </div>
         </Card>

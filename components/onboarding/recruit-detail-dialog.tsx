@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { CheckCircle2, Circle, Send } from "lucide-react";
 import {
   Dialog,
@@ -13,10 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { badges, tracks } from "@/data/onboarding";
-import { isModuleCompleted, modulesForTrack, trackProgress } from "@/lib/onboarding-utils";
-import { useOnboardingStore } from "@/lib/onboarding-store";
-import type { Employee, TrackColor } from "@/types/onboarding";
+import { isModuleCompleted, trackProgress } from "@/lib/onboarding-utils";
+import { assignTrackAction } from "@/lib/onboarding-actions";
+import type { BadgeDef, Employee, Track, TrackColor } from "@/types/onboarding";
 import { cn } from "@/lib/utils";
 
 const colorText: Record<TrackColor, string> = {
@@ -28,18 +27,23 @@ const colorText: Record<TrackColor, string> = {
 
 export function RecruitDetailDialog({
   employee,
+  allTracks,
+  allBadges,
   open,
   onOpenChange,
 }: {
   employee: Employee;
+  allTracks: Track[];
+  allBadges: BadgeDef[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const assignTrack = useOnboardingStore((s) => s.assignTrack);
   const [trackToAssign, setTrackToAssign] = useState<string>("");
+  const [isPending, startTransition] = useTransition();
 
-  const assignableTracks = tracks.filter((t) => !employee.trackIds.includes(t.id));
-  const earnedBadges = badges.filter((b) => employee.earnedBadgeIds.includes(b.id));
+  const assignedTrackIds = new Set(employee.tracks.map((t) => t.id));
+  const assignableTracks = allTracks.filter((t) => !assignedTrackIds.has(t.id));
+  const earnedBadges = allBadges.filter((b) => employee.earnedBadgeIds.includes(b.id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -53,14 +57,11 @@ export function RecruitDetailDialog({
         </DialogHeader>
 
         <div className="space-y-5">
-          {employee.trackIds.map((trackId) => {
-            const track = tracks.find((t) => t.id === trackId);
-            if (!track) return null;
-            const progress = trackProgress(employee, trackId);
-            const trackModules = modulesForTrack(trackId);
+          {employee.tracks.map((track) => {
+            const progress = trackProgress(employee, track);
 
             return (
-              <div key={trackId}>
+              <div key={track.id}>
                 <div className="mb-2 flex items-center justify-between">
                   <p className={cn("text-sm font-semibold", colorText[track.color])}>{track.title}</p>
                   <span className="text-xs text-muted">
@@ -69,7 +70,7 @@ export function RecruitDetailDialog({
                 </div>
                 <Progress value={progress.pct} className="mb-2.5" />
                 <ul className="space-y-1.5">
-                  {trackModules.map((m) => {
+                  {track.modules.map((m) => {
                     const done = isModuleCompleted(employee, m.id);
                     const entry = employee.moduleProgress[m.id];
                     return (
@@ -122,11 +123,14 @@ export function RecruitDetailDialog({
                 </Select>
                 <Button
                   size="default"
-                  disabled={!trackToAssign}
+                  disabled={!trackToAssign || isPending}
                   onClick={() => {
                     if (!trackToAssign) return;
-                    assignTrack(employee.id, trackToAssign);
-                    setTrackToAssign("");
+                    const trackId = trackToAssign;
+                    startTransition(async () => {
+                      await assignTrackAction(employee.id, trackId);
+                      setTrackToAssign("");
+                    });
                   }}
                 >
                   <Send className="h-4 w-4" />

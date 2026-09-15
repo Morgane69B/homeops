@@ -7,13 +7,10 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useOnboardingStore } from "@/lib/onboarding-store";
-import { badges as badgeDefs, tracks } from "@/data/onboarding";
-import { overallProgress, recruitStatus, STATUS_LABELS, daysUntilOnboarding } from "@/lib/onboarding-utils";
-import { levelForPoints } from "@/lib/onboarding-utils";
+import { overallProgress, recruitStatus, STATUS_LABELS, daysUntilOnboarding, levelForPoints } from "@/lib/onboarding-utils";
 import { RecruitDetailDialog } from "@/components/onboarding/recruit-detail-dialog";
 import { cn } from "@/lib/utils";
-import type { Employee, RecruitStatus } from "@/types/onboarding";
+import type { BadgeDef, Employee, RecruitStatus, Track } from "@/types/onboarding";
 
 const statusVariant: Record<RecruitStatus, "emerald" | "coral" | "indigo" | "neutral"> = {
   termine: "emerald",
@@ -22,8 +19,15 @@ const statusVariant: Record<RecruitStatus, "emerald" | "coral" | "indigo" | "neu
   pas_commence: "neutral",
 };
 
-export function ManagerDashboard() {
-  const employees = useOnboardingStore((s) => s.employees);
+export function ManagerDashboard({
+  employees,
+  allTracks,
+  allBadges,
+}: {
+  employees: Employee[];
+  allTracks: Track[];
+  allBadges: BadgeDef[];
+}) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = employees.find((e) => e.id === selectedId) ?? null;
 
@@ -98,6 +102,8 @@ export function ManagerDashboard() {
       {selected && (
         <RecruitDetailDialog
           employee={selected}
+          allTracks={allTracks}
+          allBadges={allBadges}
           open={!!selected}
           onOpenChange={(open) => !open && setSelectedId(null)}
         />
@@ -119,8 +125,7 @@ function RecruitRow({
   const status = recruitStatus(employee);
   const { level, label } = levelForPoints(employee.points);
   const due = daysUntilOnboarding(employee);
-  const assignedTracks = tracks.filter((t) => employee.trackIds.includes(t.id));
-  const newBadgeCount = badgeDefs.filter((b) => employee.earnedBadgeIds.includes(b.id)).length;
+  const newBadgeCount = employee.earnedBadgeIds.length;
 
   return (
     <motion.button
@@ -142,7 +147,7 @@ function RecruitRow({
       </div>
 
       <div className="flex flex-wrap gap-1 sm:w-40 sm:shrink-0">
-        {assignedTracks.map((t) => (
+        {employee.tracks.map((t) => (
           <Badge key={t.id} variant="neutral" className="text-[10px]">
             {t.title}
           </Badge>

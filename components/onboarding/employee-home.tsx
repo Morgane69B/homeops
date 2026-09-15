@@ -1,21 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Award, CheckCircle2, ChevronRight, Circle, Flame } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useOnboardingStore } from "@/lib/onboarding-store";
-import { badges as badgeDefs, employees, tracks } from "@/data/onboarding";
-import {
-  isModuleCompleted,
-  levelForPoints,
-  modulesForTrack,
-  trackProgress,
-} from "@/lib/onboarding-utils";
-import type { TrackColor } from "@/types/onboarding";
+import { isModuleCompleted, levelForPoints, trackProgress } from "@/lib/onboarding-utils";
+import type { BadgeDef, Employee, TrackColor } from "@/types/onboarding";
 import { cn } from "@/lib/utils";
 
 const colorClasses: Record<TrackColor, { text: string; bg: string; ring: string }> = {
@@ -25,14 +19,18 @@ const colorClasses: Record<TrackColor, { text: string; bg: string; ring: string 
   amber: { text: "text-amber", bg: "bg-amber/10", ring: "bg-amber" },
 };
 
-export function EmployeeHome() {
-  const currentEmployeeId = useOnboardingStore((s) => s.currentEmployeeId);
-  const setCurrentEmployeeId = useOnboardingStore((s) => s.setCurrentEmployeeId);
-  const storeEmployees = useOnboardingStore((s) => s.employees);
-  const employee = storeEmployees.find((e) => e.id === currentEmployeeId) ?? storeEmployees[0];
-
+export function EmployeeHome({
+  employee,
+  allBadges,
+  allEmployees,
+}: {
+  employee: Employee;
+  allBadges: BadgeDef[];
+  allEmployees: { id: string; name: string }[];
+}) {
+  const router = useRouter();
   const { level, label, nextThreshold } = levelForPoints(employee.points);
-  const earnedBadges = badgeDefs.filter((b) => employee.earnedBadgeIds.includes(b.id));
+  const earnedBadges = allBadges.filter((b) => employee.earnedBadgeIds.includes(b.id));
   const levelFloor = nextThreshold === null ? employee.points : nextThreshold - 200;
   const levelProgress =
     nextThreshold === null
@@ -46,12 +44,12 @@ export function EmployeeHome() {
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Mon parcours</h1>
           <p className="mt-0.5 text-sm text-muted">Continuez votre formation, module par module.</p>
         </div>
-        <Select value={currentEmployeeId} onValueChange={setCurrentEmployeeId}>
+        <Select value={employee.id} onValueChange={(id) => router.push(`/onboarding-express/employe?as=${id}`)}>
           <SelectTrigger className="w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {employees.map((e) => (
+            {allEmployees.map((e) => (
               <SelectItem key={e.id} value={e.id}>
                 {e.name}
               </SelectItem>
@@ -98,15 +96,12 @@ export function EmployeeHome() {
         )}
       </Card>
 
-      {employee.trackIds.map((trackId) => {
-        const track = tracks.find((t) => t.id === trackId);
-        if (!track) return null;
-        const progress = trackProgress(employee, trackId);
-        const trackModules = modulesForTrack(trackId);
+      {employee.tracks.map((track) => {
+        const progress = trackProgress(employee, track);
         const colors = colorClasses[track.color];
 
         return (
-          <div key={trackId}>
+          <div key={track.id}>
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <h2 className={cn("text-sm font-semibold", colors.text)}>{track.title}</h2>
@@ -115,7 +110,7 @@ export function EmployeeHome() {
               <span className="text-xs font-medium text-muted tabular-nums">{progress.pct}%</span>
             </div>
             <div className="space-y-2">
-              {trackModules.map((m, i) => {
+              {track.modules.map((m, i) => {
                 const done = isModuleCompleted(employee, m.id);
                 const entry = employee.moduleProgress[m.id];
                 return (
@@ -125,7 +120,7 @@ export function EmployeeHome() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: i * 0.05 }}
                   >
-                    <Link href={`/onboarding-express/employe/module/${m.id}`}>
+                    <Link href={`/onboarding-express/employe/module/${m.id}?as=${employee.id}`}>
                       <Card className="flex items-center gap-3 p-4 transition-shadow hover:shadow-md">
                         {done ? (
                           <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald" />

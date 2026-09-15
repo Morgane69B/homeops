@@ -6,19 +6,18 @@ import { RotateCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CompletionScreen } from "@/components/onboarding/completion-screen";
-import { useOnboardingStore } from "@/lib/onboarding-store";
-import { badges as badgeDefs } from "@/data/onboarding";
+import { submitModuleAttemptAction } from "@/lib/onboarding-actions";
 import { cn } from "@/lib/utils";
-import type { LearningModule } from "@/types/onboarding";
+import type { BadgeDef, LearningModule } from "@/types/onboarding";
 
 export function FlashcardDeck({ employeeId, learningModule }: { employeeId: string; learningModule: LearningModule }) {
   const cards = learningModule.flashcards ?? [];
-  const submitModuleAttempt = useOnboardingStore((s) => s.submitModuleAttempt);
 
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [finished, setFinished] = useState(false);
-  const [result, setResult] = useState<{ pointsEarned: number; newlyEarnedBadgeIds: string[] } | null>(null);
+  const [result, setResult] = useState<{ pointsEarned: number; newBadges: BadgeDef[] } | null>(null);
 
   const card = cards[index];
   const isLast = index === cards.length - 1;
@@ -30,9 +29,11 @@ export function FlashcardDeck({ employeeId, learningModule }: { employeeId: stri
     setResult(null);
   }
 
-  function handleNext() {
+  async function handleNext() {
     if (isLast) {
-      const res = submitModuleAttempt(employeeId, learningModule.id, 100);
+      setSubmitting(true);
+      const res = await submitModuleAttemptAction(employeeId, learningModule.id, 100);
+      setSubmitting(false);
       setResult(res);
       setFinished(true);
       return;
@@ -48,7 +49,8 @@ export function FlashcardDeck({ employeeId, learningModule }: { employeeId: stri
         scorePct={100}
         passed
         pointsEarned={result.pointsEarned}
-        newBadges={badgeDefs.filter((b) => result.newlyEarnedBadgeIds.includes(b.id))}
+        newBadges={result.newBadges}
+        employeeId={employeeId}
         onRetry={reset}
       />
     );
@@ -105,8 +107,8 @@ export function FlashcardDeck({ employeeId, learningModule }: { employeeId: stri
         </motion.div>
       </AnimatePresence>
 
-      <Button className="mt-4 w-full" size="lg" onClick={handleNext}>
-        {isLast ? "Terminer le module" : "Carte suivante"}
+      <Button className="mt-4 w-full" size="lg" onClick={handleNext} disabled={submitting}>
+        {submitting ? "Enregistrement…" : isLast ? "Terminer le module" : "Carte suivante"}
       </Button>
     </div>
   );

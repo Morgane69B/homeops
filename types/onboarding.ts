@@ -41,7 +41,7 @@ export interface Track {
   description: string;
   targetRole: string;
   color: TrackColor;
-  moduleIds: string[];
+  modules: LearningModule[];
 }
 
 export interface BadgeDef {
@@ -65,7 +65,7 @@ export interface Employee {
   role: string;
   hiredAt: string;
   onboardingDueAt: string;
-  trackIds: string[];
+  tracks: Track[];
   points: number;
   earnedBadgeIds: string[];
   moduleProgress: Record<string, ModuleProgressEntry>;
