@@ -92,7 +92,7 @@ export function CompletionScreen({
               </Button>
             )}
             <Button asChild>
-              <Link href={`/onboarding-express/employe?as=${employeeId}`}>Retour à mon parcours</Link>
+              <Link href={`/employe?as=${employeeId}`}>Retour à mon parcours</Link>
             </Button>
           </div>
         </Card>

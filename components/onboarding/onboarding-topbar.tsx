@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const navItems = [
-  { href: "/onboarding-express/manager", label: "Espace Manager" },
-  { href: "/onboarding-express/employe", label: "Espace Employé" },
+  { href: "/manager", label: "Espace Manager" },
+  { href: "/employe", label: "Espace Employé" },
 ];
 
 export function OnboardingTopbar() {
@@ -18,7 +18,7 @@ export function OnboardingTopbar() {
   return (
     <header className="glass sticky top-0 z-30 border-b border-black/5 dark:border-white/5">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
-        <Link href="/onboarding-express/manager" className="flex items-center gap-2.5">
+        <Link href="/manager" className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo to-indigo/70 shadow-lg shadow-indigo/30">
             <GraduationCap className="h-4.5 w-4.5 text-white" strokeWidth={2.5} />
           </div>

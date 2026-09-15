@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle, Award, TrendingUp, Users } from "lucide-react";
-import { KpiCard } from "@/components/dashboard/kpi-card";
+import { KpiCard } from "@/components/onboarding/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";

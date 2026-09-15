@@ -18,8 +18,8 @@ export async function assignTrackAction(employeeId: string, trackId: string): Pr
     create: { userId: employeeId, trackId, assignedById: manager.id, status: "NOT_STARTED" },
   });
 
-  revalidatePath("/onboarding-express/manager");
-  revalidatePath("/onboarding-express/employe");
+  revalidatePath("/manager");
+  revalidatePath("/employe");
 }
 
 async function checkAndAwardBadges(employeeId: string, justCompletedModuleId: string, scorePct: number): Promise<BadgeDef[]> {
@@ -91,8 +91,8 @@ export async function submitModuleAttemptAction(
 
   const newBadges = passed ? await checkAndAwardBadges(employeeId, moduleId, scorePct) : [];
 
-  revalidatePath("/onboarding-express/employe");
-  revalidatePath("/onboarding-express/manager");
+  revalidatePath("/employe");
+  revalidatePath("/manager");
 
   return { pointsEarned: isNewBest ? pointsEarned : 0, newBadges, passed, scorePct };
 }

@@ -25,7 +25,7 @@ export default async function ModulePage({
   return (
     <div>
       <Link
-        href={`/onboarding-express/employe?as=${employee.id}`}
+        href={`/employe?as=${employee.id}`}
         className="mb-5 flex items-center gap-1.5 text-sm font-medium text-muted hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Retour

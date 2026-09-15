@@ -44,7 +44,7 @@ export function EmployeeHome({
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Mon parcours</h1>
           <p className="mt-0.5 text-sm text-muted">Continuez votre formation, module par module.</p>
         </div>
-        <Select value={employee.id} onValueChange={(id) => router.push(`/onboarding-express/employe?as=${id}`)}>
+        <Select value={employee.id} onValueChange={(id) => router.push(`/employe?as=${id}`)}>
           <SelectTrigger className="w-48">
             <SelectValue />
           </SelectTrigger>
@@ -120,7 +120,7 @@ export function EmployeeHome({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: i * 0.05 }}
                   >
-                    <Link href={`/onboarding-express/employe/module/${m.id}?as=${employee.id}`}>
+                    <Link href={`/employe/module/${m.id}?as=${employee.id}`}>
                       <Card className="flex items-center gap-3 p-4 transition-shadow hover:shadow-md">
                         {done ? (
                           <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald" />
