@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { PrismaClient as AdapterPrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
@@ -10,11 +9,13 @@ const googleEnabled = Boolean(
   process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET,
 );
 
-// @auth/prisma-adapter types against the classic `@prisma/client` output;
-// our schema generates into a custom path (lib/generated/prisma). Both
-// expose the same runtime API, so this cast just bridges the type mismatch.
+// @auth/prisma-adapter types against the classic `@prisma/client` package,
+// which our custom-output generator (lib/generated/prisma) doesn't populate
+// at all — that package has no PrismaClient export in this setup, so the
+// adapter's own parameter type is unresolvable and we bridge via `any`.
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma as unknown as AdapterPrismaClient),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: PrismaAdapter(prisma as any),
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [
