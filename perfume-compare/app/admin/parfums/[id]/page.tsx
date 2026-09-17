@@ -43,6 +43,7 @@ export default async function EditPerfumePage({
               price: Number(o.price),
               volumeMl: o.volumeMl,
               merchantName: o.merchant.name,
+              affiliateUrl: o.affiliateUrl,
             })),
           }}
         />

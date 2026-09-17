@@ -25,7 +25,13 @@ const CONCENTRATION_OPTIONS = [
 const selectClassName =
   "h-9 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-sm text-foreground outline-none focus-visible:border-gold/40";
 
-type Offer = { id: string; price: number; volumeMl: number; merchantName: string };
+type Offer = {
+  id: string;
+  price: number;
+  volumeMl: number;
+  merchantName: string;
+  affiliateUrl: string;
+};
 
 type PerfumeData = {
   id: string;
@@ -217,25 +223,37 @@ export function PerfumeForm({
       {mode === "edit" && perfume!.offers.length > 0 && (
         <div className="space-y-3">
           <Label>Prix par marchand</Label>
-          <div className="space-y-2 rounded-lg border border-white/10 p-3">
+          <div className="space-y-4 rounded-lg border border-white/10 p-3">
             {perfume!.offers.map((offer) => (
-              <div key={offer.id} className="flex items-center gap-3 text-sm">
+              <div key={offer.id} className="space-y-1.5 text-sm">
                 <input type="hidden" name="offerId" value={offer.id} />
-                <span className="flex-1 truncate text-foreground/80">
-                  {offer.merchantName} · {offer.volumeMl} ml
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="flex-1 truncate text-foreground/80">
+                    {offer.merchantName} · {offer.volumeMl} ml
+                  </span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name={`offerPrice_${offer.id}`}
+                    defaultValue={offer.price}
+                    className="w-28 border-white/10 bg-white/[0.03]"
+                  />
+                  <span className="text-muted-foreground">€</span>
+                </div>
                 <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  name={`offerPrice_${offer.id}`}
-                  defaultValue={offer.price}
-                  className="w-28 border-white/10 bg-white/[0.03]"
+                  type="url"
+                  name={`offerUrl_${offer.id}`}
+                  defaultValue={offer.affiliateUrl}
+                  placeholder="https://..."
+                  className="border-white/10 bg-white/[0.03] text-xs"
                 />
-                <span className="text-muted-foreground">€</span>
               </div>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground">
+            Le lien est celui du bouton « Voir l&apos;offre » sur la fiche produit.
+          </p>
         </div>
       )}
 

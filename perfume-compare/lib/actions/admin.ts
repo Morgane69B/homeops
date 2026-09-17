@@ -93,12 +93,21 @@ export async function updatePerfume(
   await Promise.all(
     offerIds.map((offerId) => {
       const price = formData.get(`offerPrice_${offerId}`);
-      if (typeof price !== "string" || price.trim() === "") return null;
-      const value = Number(price);
-      if (!Number.isFinite(value) || value < 0) return null;
+      const url = formData.get(`offerUrl_${offerId}`);
+      const data: { price?: number; affiliateUrl?: string } = {};
+
+      if (typeof price === "string" && price.trim() !== "") {
+        const value = Number(price);
+        if (Number.isFinite(value) && value >= 0) data.price = value;
+      }
+      if (typeof url === "string" && url.trim() !== "") {
+        data.affiliateUrl = url.trim();
+      }
+      if (Object.keys(data).length === 0) return null;
+
       return prisma.priceOffer.update({
         where: { id: offerId },
-        data: { price: value },
+        data,
       });
     }),
   );
