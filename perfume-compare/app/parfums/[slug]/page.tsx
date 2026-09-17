@@ -1,13 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { RotateCcw } from "lucide-react";
 import { getPerfumeBySlug, getRelatedPerfumes } from "@/lib/catalogue";
-import { getBottleStyle } from "@/lib/bottle-style";
 import { resolvePerfumeImage } from "@/lib/product-image";
 import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
-import { ProductScene } from "@/components/three/product-scene";
 import { NoteInfusionIntro } from "@/components/product/note-infusion-intro";
 import { OlfactoryPyramid } from "@/components/product/olfactory-pyramid";
 import { PriceTable } from "@/components/product/price-table";
@@ -55,7 +53,6 @@ export default async function ParfumDetailPage({
     auth(),
   ]);
 
-  const bottleStyle = getBottleStyle(perfume.slug, perfume.mainFamily.slug);
   const image = resolvePerfumeImage(perfume);
   const isAdmin = session?.user?.role === "ADMIN";
 
@@ -128,14 +125,17 @@ export default async function ParfumDetailPage({
             />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/10 to-background/60" />
             <div className="relative size-full">
-              <ProductScene style={bottleStyle} />
+              <Image
+                src={image}
+                alt={`${perfume.brand} ${perfume.name}`}
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-contain p-10 sm:p-14"
+                priority
+              />
               <NoteInfusionIntro notes={perfume.notes} />
             </div>
           </div>
-          <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-            <RotateCcw className="size-3" />
-            Faites glisser pour faire tourner le flacon
-          </p>
         </div>
       </div>
 
