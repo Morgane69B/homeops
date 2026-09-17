@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getArticleBySlug } from "@/lib/blog";
 import { getWishlistedIds } from "@/lib/actions/wishlist";
+import { auth } from "@/auth";
 import { PerfumeCard } from "@/components/catalogue/perfume-card";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
@@ -31,7 +33,11 @@ export default async function ArticlePage({
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const wishlistedIds = await getWishlistedIds();
+  const [wishlistedIds, session] = await Promise.all([
+    getWishlistedIds(),
+    auth(),
+  ]);
+  const isAdmin = session?.user?.role === "ADMIN";
   const paragraphs = article.content.split("\n\n");
 
   return (
@@ -44,6 +50,19 @@ export default async function ArticlePage({
         <span className="text-foreground/70">{article.title}</span>
       </nav>
 
+      {article.coverImage && (
+        <div className="relative mt-6 aspect-[21/9] overflow-hidden rounded-2xl">
+          <Image
+            src={article.coverImage}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 768px, 100vw"
+            className="object-cover"
+            priority
+          />
+        </div>
+      )}
+
       <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
         <time dateTime={article.createdAt.toISOString()}>
           {DATE_FORMATTER.format(article.createdAt)}
@@ -52,9 +71,19 @@ export default async function ArticlePage({
         <span>{article.readingTime} min de lecture</span>
       </div>
 
-      <h1 className="mt-4 font-display text-4xl text-foreground sm:text-5xl">
-        {article.title}
-      </h1>
+      <div className="mt-4 flex flex-wrap items-center gap-4">
+        <h1 className="font-display text-4xl text-foreground sm:text-5xl">
+          {article.title}
+        </h1>
+        {isAdmin && (
+          <Link
+            href={`/admin/articles/${article.id}`}
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-gold hover:underline"
+          >
+            Modifier
+          </Link>
+        )}
+      </div>
 
       <div className="mt-10 space-y-5 text-base leading-relaxed text-foreground/80">
         {paragraphs.map((paragraph, i) => (

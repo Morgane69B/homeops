@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 import { ConcentrationChart } from "@/components/guide/concentration-chart";
 import { FamilyGrid } from "@/components/guide/family-grid";
 import { TIPS } from "@/lib/guide-content";
@@ -12,9 +13,11 @@ export const metadata: Metadata = {
 };
 
 export default async function GuidePage() {
-  const families = await prisma.olfactoryFamily.findMany({
-    orderBy: { name: "asc" },
-  });
+  const [families, session] = await Promise.all([
+    prisma.olfactoryFamily.findMany({ orderBy: { name: "asc" } }),
+    auth(),
+  ]);
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
     <div>
@@ -67,7 +70,7 @@ export default async function GuidePage() {
             </p>
           </FadeIn>
           <div className="mt-10">
-            <FamilyGrid families={families} />
+            <FamilyGrid families={families} isAdmin={isAdmin} />
           </div>
         </div>
       </section>

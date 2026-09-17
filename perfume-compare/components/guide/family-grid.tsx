@@ -4,7 +4,13 @@ import { FAMILY_SUBFAMILIES } from "@/lib/guide-content";
 
 type Family = { id: string; slug: string; name: string; description: string };
 
-export function FamilyGrid({ families }: { families: Family[] }) {
+export function FamilyGrid({
+  families,
+  isAdmin,
+}: {
+  families: Family[];
+  isAdmin?: boolean;
+}) {
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {families.map((family) => (
@@ -12,9 +18,19 @@ export function FamilyGrid({ families }: { families: Family[] }) {
           key={family.id}
           className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6"
         >
-          <h3 className="font-display text-xl text-foreground">
-            {family.name}
-          </h3>
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="font-display text-xl text-foreground">
+              {family.name}
+            </h3>
+            {isAdmin && (
+              <Link
+                href={`/admin/familles/${family.id}`}
+                className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-gold hover:underline"
+              >
+                Modifier
+              </Link>
+            )}
+          </div>
           <p className="mt-2 text-sm text-muted-foreground">
             {family.description}
           </p>

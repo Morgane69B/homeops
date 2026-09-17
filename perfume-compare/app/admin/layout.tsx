@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
+import { AdminNav } from "@/components/admin/admin-nav";
 
 export const metadata: Metadata = {
   title: "Administration | Essence",
@@ -22,7 +23,7 @@ export default async function AdminLayout({
             Administration
           </span>
           <h1 className="mt-2 font-display text-3xl text-foreground">
-            Gérer le catalogue
+            Gérer le site
           </h1>
         </div>
         <Link
@@ -32,7 +33,10 @@ export default async function AdminLayout({
           ← Retour au site
         </Link>
       </div>
-      <div className="mt-10">{children}</div>
+      <div className="mt-8">
+        <AdminNav />
+      </div>
+      <div className="mt-8">{children}</div>
     </div>
   );
 }

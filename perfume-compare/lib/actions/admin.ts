@@ -176,3 +176,124 @@ export async function deletePerfume(id: string) {
   revalidatePath("/admin");
   redirect("/admin");
 }
+
+const ArticleSchema = z.object({
+  title: z.string().min(1, "Le titre est requis."),
+  excerpt: z.string().min(1, "Le résumé est requis."),
+  content: z.string().min(1, "Le contenu est requis."),
+  coverImage: z.union([z.url("URL d'image invalide."), z.literal("")]),
+});
+
+export type ArticleFormResult = { error: string } | { success: true; id: string };
+
+function parseArticleForm(formData: FormData) {
+  return ArticleSchema.safeParse({
+    title: formData.get("title"),
+    excerpt: formData.get("excerpt"),
+    content: formData.get("content"),
+    coverImage: formData.get("coverImage") ?? "",
+  });
+}
+
+export async function createArticle(
+  formData: FormData,
+): Promise<ArticleFormResult> {
+  await requireAdmin();
+
+  const parsed = parseArticleForm(formData);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+  const data = parsed.data;
+
+  const baseSlug = slugify(data.title);
+  let slug = baseSlug;
+  let suffix = 1;
+  while (await prisma.article.findUnique({ where: { slug } })) {
+    suffix += 1;
+    slug = `${baseSlug}-${suffix}`;
+  }
+
+  const perfumeIds = formData.getAll("perfumeId") as string[];
+
+  const created = await prisma.article.create({
+    data: {
+      ...data,
+      slug,
+      coverImage: data.coverImage || null,
+      perfumes: { connect: perfumeIds.map((id) => ({ id })) },
+    },
+  });
+
+  revalidatePath("/blog");
+  revalidatePath("/admin/articles");
+  redirect(`/admin/articles/${created.id}`);
+}
+
+export async function updateArticle(
+  id: string,
+  formData: FormData,
+): Promise<ArticleFormResult> {
+  await requireAdmin();
+
+  const parsed = parseArticleForm(formData);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+  const data = parsed.data;
+  const perfumeIds = formData.getAll("perfumeId") as string[];
+
+  const updated = await prisma.article.update({
+    where: { id },
+    data: {
+      ...data,
+      coverImage: data.coverImage || null,
+      perfumes: { set: perfumeIds.map((perfumeId) => ({ id: perfumeId })) },
+    },
+  });
+
+  revalidatePath("/blog");
+  revalidatePath(`/blog/${updated.slug}`);
+  revalidatePath("/admin/articles");
+  return { success: true, id: updated.id };
+}
+
+export async function deleteArticle(id: string) {
+  await requireAdmin();
+  await prisma.article.delete({ where: { id } });
+  revalidatePath("/blog");
+  revalidatePath("/admin/articles");
+  redirect("/admin/articles");
+}
+
+const FamilySchema = z.object({
+  name: z.string().min(1, "Le nom est requis."),
+  description: z.string().min(1, "La description est requise."),
+});
+
+export type FamilyFormResult = { error: string } | { success: true; id: string };
+
+export async function updateFamily(
+  id: string,
+  formData: FormData,
+): Promise<FamilyFormResult> {
+  await requireAdmin();
+
+  const parsed = FamilySchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const updated = await prisma.olfactoryFamily.update({
+    where: { id },
+    data: parsed.data,
+  });
+
+  revalidatePath("/guide");
+  revalidatePath("/parfums");
+  revalidatePath("/admin/familles");
+  return { success: true, id: updated.id };
+}
