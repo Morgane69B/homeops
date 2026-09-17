@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,12 +25,19 @@ const CONCENTRATION_OPTIONS = [
 const selectClassName =
   "h-9 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-sm text-foreground outline-none focus-visible:border-gold/40";
 
-type Offer = {
+type ExtraOffer = {
   id: string;
   price: number;
   volumeMl: number;
   merchantName: string;
   affiliateUrl: string;
+};
+
+type CoreMerchant = {
+  merchantId: string;
+  merchantName: string;
+  merchantSiteUrl: string;
+  offer: { id: string; price: number; volumeMl: number; affiliateUrl: string } | null;
 };
 
 type PerfumeData = {
@@ -42,7 +49,8 @@ type PerfumeData = {
   mainFamilyId: string;
   description: string;
   imageUrl: string | null;
-  offers: Offer[];
+  coreMerchants: CoreMerchant[];
+  extraOffers: ExtraOffer[];
 };
 
 export function PerfumeForm({
@@ -66,9 +74,29 @@ export function PerfumeForm({
   );
   const [description, setDescription] = useState(perfume?.description ?? "");
   const [imageUrl, setImageUrl] = useState(perfume?.imageUrl ?? "");
+  const [activeCoreMerchantIds, setActiveCoreMerchantIds] = useState<Set<string>>(
+    () => new Set((perfume?.coreMerchants ?? []).filter((m) => m.offer).map((m) => m.merchantId)),
+  );
+  const [extraOffers, setExtraOffers] = useState<ExtraOffer[]>(perfume?.extraOffers ?? []);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  function toggleCoreMerchant(merchantId: string) {
+    setActiveCoreMerchantIds((current) => {
+      const next = new Set(current);
+      if (next.has(merchantId)) {
+        next.delete(merchantId);
+      } else {
+        next.add(merchantId);
+      }
+      return next;
+    });
+  }
+
+  function removeExtraOffer(offerId: string) {
+    setExtraOffers((current) => current.filter((o) => o.id !== offerId));
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -220,48 +248,132 @@ export function PerfumeForm({
         )}
       </div>
 
-      {mode === "edit" && perfume!.offers.length > 0 && (
+      {mode === "edit" && (
         <div className="space-y-3">
-          <Label>Prix par marchand</Label>
-          <div className="space-y-4 rounded-lg border border-white/10 p-3">
-            {perfume!.offers.map((offer) => (
-              <div key={offer.id} className="space-y-1.5 text-sm">
-                <input type="hidden" name="offerId" value={offer.id} />
-                <div className="flex items-center gap-3">
-                  <span className="flex-1 truncate text-foreground/80">
-                    {offer.merchantName}
-                  </span>
-                  <Input
-                    type="number"
-                    step="1"
-                    min="1"
-                    name={`offerVolume_${offer.id}`}
-                    defaultValue={offer.volumeMl}
-                    className="w-20 border-white/10 bg-white/[0.03]"
-                  />
-                  <span className="text-muted-foreground">ml</span>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    name={`offerPrice_${offer.id}`}
-                    defaultValue={offer.price}
-                    className="w-28 border-white/10 bg-white/[0.03]"
-                  />
-                  <span className="text-muted-foreground">€</span>
+          <Label>Marchands</Label>
+          <div className="space-y-3 rounded-lg border border-white/10 p-3">
+            {perfume!.coreMerchants.map((merchant) => {
+              const isActive = activeCoreMerchantIds.has(merchant.merchantId);
+              return (
+                <div key={merchant.merchantId} className="space-y-1.5 text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="flex-1 truncate text-foreground/80">
+                      {merchant.merchantName}
+                    </span>
+                    {isActive ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleCoreMerchant(merchant.merchantId)}
+                        className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={`Retirer ${merchant.merchantName}`}
+                      >
+                        <X className="size-4" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => toggleCoreMerchant(merchant.merchantId)}
+                        className="flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-xs text-muted-foreground hover:border-gold/30 hover:text-gold"
+                      >
+                        <Plus className="size-3.5" />
+                        Ajouter
+                      </button>
+                    )}
+                  </div>
+                  {isActive && (
+                    <>
+                      <input
+                        type="hidden"
+                        name="activeCoreMerchantId"
+                        value={merchant.merchantId}
+                      />
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="number"
+                          step="1"
+                          min="1"
+                          name={`coreVolume_${merchant.merchantId}`}
+                          defaultValue={merchant.offer?.volumeMl ?? 50}
+                          className="w-20 border-white/10 bg-white/[0.03]"
+                        />
+                        <span className="text-muted-foreground">ml</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          name={`corePrice_${merchant.merchantId}`}
+                          defaultValue={merchant.offer?.price ?? ""}
+                          placeholder="0.00"
+                          className="w-28 border-white/10 bg-white/[0.03]"
+                        />
+                        <span className="text-muted-foreground">€</span>
+                      </div>
+                      <Input
+                        type="url"
+                        name={`coreUrl_${merchant.merchantId}`}
+                        defaultValue={merchant.offer?.affiliateUrl ?? ""}
+                        placeholder="https://..."
+                        className="border-white/10 bg-white/[0.03] text-xs"
+                      />
+                    </>
+                  )}
                 </div>
-                <Input
-                  type="url"
-                  name={`offerUrl_${offer.id}`}
-                  defaultValue={offer.affiliateUrl}
-                  placeholder="https://..."
-                  className="border-white/10 bg-white/[0.03] text-xs"
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {extraOffers.length > 0 && (
+            <div className="space-y-4 rounded-lg border border-white/10 p-3">
+              {extraOffers.map((offer) => (
+                <div key={offer.id} className="space-y-1.5 text-sm">
+                  <input type="hidden" name="offerId" value={offer.id} />
+                  <div className="flex items-center gap-3">
+                    <span className="flex-1 truncate text-foreground/80">
+                      {offer.merchantName}
+                    </span>
+                    <Input
+                      type="number"
+                      step="1"
+                      min="1"
+                      name={`offerVolume_${offer.id}`}
+                      defaultValue={offer.volumeMl}
+                      className="w-20 border-white/10 bg-white/[0.03]"
+                    />
+                    <span className="text-muted-foreground">ml</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      name={`offerPrice_${offer.id}`}
+                      defaultValue={offer.price}
+                      className="w-28 border-white/10 bg-white/[0.03]"
+                    />
+                    <span className="text-muted-foreground">€</span>
+                    <button
+                      type="button"
+                      onClick={() => removeExtraOffer(offer.id)}
+                      className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      aria-label={`Retirer ${offer.merchantName}`}
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                  <Input
+                    type="url"
+                    name={`offerUrl_${offer.id}`}
+                    defaultValue={offer.affiliateUrl}
+                    placeholder="https://..."
+                    className="border-white/10 bg-white/[0.03] text-xs"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
           <p className="text-xs text-muted-foreground">
-            Le lien est celui du bouton « Voir l&apos;offre » sur la fiche produit.
+            Cliquez sur « Ajouter » pour proposer ce parfum chez un marchand, ou sur la croix
+            pour le retirer. Le lien est celui du bouton « Voir l&apos;offre » sur la fiche
+            produit.
           </p>
         </div>
       )}
