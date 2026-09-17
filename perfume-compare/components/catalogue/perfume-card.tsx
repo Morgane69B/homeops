@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { CataloguePerfume } from "@/lib/catalogue";
-import { getPerfumeImage } from "@/lib/product-image";
+import { resolvePerfumeImage } from "@/lib/product-image";
 import { WishlistButton } from "@/components/catalogue/wishlist-button";
 
 const CONCENTRATION_LABELS: Record<string, string> = {
@@ -19,7 +19,7 @@ export function PerfumeCard({
   perfume: CataloguePerfume;
   isWishlisted?: boolean;
 }) {
-  const image = getPerfumeImage(perfume.slug, perfume.mainFamily.slug);
+  const image = resolvePerfumeImage(perfume);
 
   return (
     <Link

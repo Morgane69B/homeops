@@ -35,3 +35,15 @@ export function getPerfumeImage(slug: string, familySlug: string): string {
   const id = pool[hashString(slug) % pool.length];
   return pexels(id);
 }
+
+/**
+ * Prefers the admin-set `imageUrl` on a perfume, falling back to the curated
+ * deterministic picker when none was set.
+ */
+export function resolvePerfumeImage(perfume: {
+  slug: string;
+  imageUrl?: string | null;
+  mainFamily: { slug: string };
+}): string {
+  return perfume.imageUrl?.trim() || getPerfumeImage(perfume.slug, perfume.mainFamily.slug);
+}

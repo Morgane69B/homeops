@@ -29,6 +29,11 @@ enum NoteCategory {
   BASE
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 // --- Auth (NextAuth / Auth.js Prisma adapter) ---
 
 model User {
@@ -37,6 +42,7 @@ model User {
   password      String?
   name          String?
   image         String?
+  role          Role      @default(USER)
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
 

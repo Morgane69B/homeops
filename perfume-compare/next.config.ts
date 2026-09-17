@@ -5,10 +5,12 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   images: {
+    // Wildcarded so admins can paste any image URL for a perfume's photo,
+    // not just Pexels.
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "images.pexels.com",
+        hostname: "**",
       },
     ],
   },

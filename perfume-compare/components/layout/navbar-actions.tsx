@@ -22,7 +22,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NavLinks } from "@/components/layout/nav-links";
 
-type SessionUser = { name?: string | null; email?: string | null } | undefined;
+type SessionUser =
+  | { name?: string | null; email?: string | null; role?: string }
+  | undefined;
 
 export function NavbarActions({ user }: { user: SessionUser }) {
   return (
@@ -59,6 +61,11 @@ export function NavbarActions({ user }: { user: SessionUser }) {
             <DropdownMenuItem render={<Link href="/dashboard" />}>
               Tableau de bord
             </DropdownMenuItem>
+            {user.role === "ADMIN" && (
+              <DropdownMenuItem render={<Link href="/admin" />}>
+                Administration
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
               Se déconnecter
             </DropdownMenuItem>
@@ -113,6 +120,14 @@ export function NavbarActions({ user }: { user: SessionUser }) {
                 >
                   Tableau de bord
                 </Link>
+                {user.role === "ADMIN" && (
+                  <Link
+                    href="/admin"
+                    className="rounded-md px-2 py-3 text-base text-foreground/80 transition-colors hover:bg-white/5 hover:text-gold"
+                  >
+                    Administration
+                  </Link>
+                )}
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
                   className="rounded-md px-2 py-3 text-left text-base text-foreground/80 transition-colors hover:bg-white/5 hover:text-gold"

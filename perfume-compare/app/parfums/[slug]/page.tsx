@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { RotateCcw } from "lucide-react";
 import { getPerfumeBySlug, getRelatedPerfumes } from "@/lib/catalogue";
 import { getBottleStyle } from "@/lib/bottle-style";
-import { getPerfumeImage } from "@/lib/product-image";
+import { resolvePerfumeImage } from "@/lib/product-image";
+import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { ProductScene } from "@/components/three/product-scene";
 import { NoteInfusionIntro } from "@/components/product/note-infusion-intro";
@@ -48,13 +49,15 @@ export default async function ParfumDetailPage({
   const perfume = await getPerfumeBySlug(slug);
   if (!perfume) notFound();
 
-  const [related, wishlistedIds] = await Promise.all([
+  const [related, wishlistedIds, session] = await Promise.all([
     getRelatedPerfumes(perfume.mainFamilyId, perfume.id),
     getWishlistedIds(),
+    auth(),
   ]);
 
   const bottleStyle = getBottleStyle(perfume.slug, perfume.mainFamily.slug);
-  const image = getPerfumeImage(perfume.slug, perfume.mainFamily.slug);
+  const image = resolvePerfumeImage(perfume);
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
@@ -102,6 +105,14 @@ export default async function ParfumDetailPage({
               initialWishlisted={wishlistedIds.has(perfume.id)}
               variant="label"
             />
+            {isAdmin && (
+              <Link
+                href={`/admin/parfums/${perfume.id}`}
+                className="text-xs text-muted-foreground underline-offset-2 hover:text-gold hover:underline"
+              >
+                Modifier
+              </Link>
+            )}
           </div>
         </div>
 
