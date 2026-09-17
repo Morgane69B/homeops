@@ -164,6 +164,16 @@ model WishlistItem {
   @@unique([userId, perfumeId])
 }
 
+// --- Legal ---
+
+model LegalPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String
+  updatedAt DateTime @updatedAt
+}
+
 // --- Blog ---
 
 model Article {

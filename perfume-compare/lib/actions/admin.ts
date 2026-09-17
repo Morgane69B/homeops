@@ -7,6 +7,13 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { CORE_MERCHANT_NAMES } from "@/lib/merchants";
 
+// <textarea> values are normalized to CRLF by the browser on form submit
+// (per the HTML form-data-set spec); multi-line fields are later split on
+// bare "\n\n", so every one of them needs this before it's stored.
+function normalizeNewlines(value: string) {
+  return value.replace(/\r\n/g, "\n");
+}
+
 const PerfumeSchema = z.object({
   name: z.string().min(1, "Le nom est requis."),
   brand: z.string().min(1, "La marque est requise."),
@@ -18,7 +25,7 @@ const PerfumeSchema = z.object({
     "EAU_DE_COLOGNE",
   ]),
   mainFamilyId: z.string().min(1, "La famille olfactive est requise."),
-  description: z.string().min(1, "La description est requise."),
+  description: z.string().min(1, "La description est requise.").transform(normalizeNewlines),
   imageUrl: z.union([z.url("URL d'image invalide."), z.literal("")]),
 });
 
@@ -179,8 +186,8 @@ export async function deletePerfume(id: string) {
 
 const ArticleSchema = z.object({
   title: z.string().min(1, "Le titre est requis."),
-  excerpt: z.string().min(1, "Le résumé est requis."),
-  content: z.string().min(1, "Le contenu est requis."),
+  excerpt: z.string().min(1, "Le résumé est requis.").transform(normalizeNewlines),
+  content: z.string().min(1, "Le contenu est requis.").transform(normalizeNewlines),
   coverImage: z.union([z.url("URL d'image invalide."), z.literal("")]),
 });
 
@@ -268,7 +275,7 @@ export async function deleteArticle(id: string) {
 
 const FamilySchema = z.object({
   name: z.string().min(1, "Le nom est requis."),
-  description: z.string().min(1, "La description est requise."),
+  description: z.string().min(1, "La description est requise.").transform(normalizeNewlines),
 });
 
 export type FamilyFormResult = { error: string } | { success: true; id: string };
@@ -295,5 +302,42 @@ export async function updateFamily(
   revalidatePath("/guide");
   revalidatePath("/parfums");
   revalidatePath("/admin/familles");
+  return { success: true, id: updated.id };
+}
+
+const LEGAL_PATHS: Record<string, string> = {
+  "mentions-legales": "/mentions-legales",
+  confidentialite: "/confidentialite",
+  cgu: "/cgu",
+};
+
+const LegalPageSchema = z.object({
+  title: z.string().min(1, "Le titre est requis."),
+  content: z.string().min(1, "Le contenu est requis.").transform(normalizeNewlines),
+});
+
+export type LegalPageFormResult = { error: string } | { success: true; id: string };
+
+export async function updateLegalPage(
+  id: string,
+  formData: FormData,
+): Promise<LegalPageFormResult> {
+  await requireAdmin();
+
+  const parsed = LegalPageSchema.safeParse({
+    title: formData.get("title"),
+    content: formData.get("content"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const updated = await prisma.legalPage.update({
+    where: { id },
+    data: parsed.data,
+  });
+
+  revalidatePath(LEGAL_PATHS[updated.slug] ?? "/");
+  revalidatePath("/admin/legal");
   return { success: true, id: updated.id };
 }

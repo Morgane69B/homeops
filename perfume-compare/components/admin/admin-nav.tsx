@@ -8,6 +8,7 @@ const TABS = [
   { href: "/admin", label: "Parfums", match: (path: string) => path === "/admin" || path.startsWith("/admin/parfums") },
   { href: "/admin/articles", label: "Journal", match: (path: string) => path.startsWith("/admin/articles") },
   { href: "/admin/familles", label: "Guide", match: (path: string) => path.startsWith("/admin/familles") },
+  { href: "/admin/legal", label: "Légal", match: (path: string) => path.startsWith("/admin/legal") },
 ];
 
 export function AdminNav() {
