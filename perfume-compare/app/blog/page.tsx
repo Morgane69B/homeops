@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { getArticles } from "@/lib/blog";
 import { ArticleCard } from "@/components/blog/article-card";
 import { FadeIn } from "@/components/motion/fade-in";
+
+export const metadata: Metadata = {
+  title: "Le Journal | Essence",
+  description:
+    "Sélections, focus ingrédients et conseils de parfumeurs pour aiguiser votre nez avant de comparer les prix.",
+};
 
 export default async function BlogPage() {
   const articles = await getArticles();

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   getCatalogue,
   getFilterOptions,
@@ -11,6 +12,12 @@ import { MobileFilters } from "@/components/catalogue/mobile-filters";
 import { NoteComposer } from "@/components/catalogue/note-composer";
 import { PerfumeCard } from "@/components/catalogue/perfume-card";
 import { getWishlistedIds } from "@/lib/actions/wishlist";
+
+export const metadata: Metadata = {
+  title: "Catalogue — Tous les parfums | Essence",
+  description:
+    "Comparez les prix de dizaines de parfums de grandes maisons et marques de niche. Filtrez par famille olfactive, budget ou notes de composition.",
+};
 
 export default async function ParfumsPage({
   searchParams,

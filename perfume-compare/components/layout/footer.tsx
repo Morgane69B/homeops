@@ -13,8 +13,9 @@ const COLUMNS = [
     title: "Essence",
     links: [
       { href: "/dashboard", label: "Mon espace" },
-      { href: "#", label: "Mentions légales" },
-      { href: "#", label: "Confidentialité" },
+      { href: "/mentions-legales", label: "Mentions légales" },
+      { href: "/confidentialite", label: "Confidentialité" },
+      { href: "/cgu", label: "CGU" },
     ],
   },
 ];

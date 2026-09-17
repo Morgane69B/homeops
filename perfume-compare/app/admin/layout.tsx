@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
+
+export const metadata: Metadata = {
+  title: "Administration | Essence",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({
   children,

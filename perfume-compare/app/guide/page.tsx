@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { ConcentrationChart } from "@/components/guide/concentration-chart";
 import { FamilyGrid } from "@/components/guide/family-grid";
 import { TIPS } from "@/lib/guide-content";
 import { FadeIn } from "@/components/motion/fade-in";
+
+export const metadata: Metadata = {
+  title: "Le Guide du Parfum | Essence",
+  description:
+    "Concentrations, familles olfactives et bons gestes d'usage : tout comprendre avant de choisir votre prochain parfum.",
+};
 
 export default async function GuidePage() {
   const families = await prisma.olfactoryFamily.findMany({

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Heart } from "lucide-react";
@@ -6,6 +7,11 @@ import { getWishlistByFamily } from "@/lib/dashboard";
 import { PerfumeCard } from "@/components/catalogue/perfume-card";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Mon espace | Essence",
+  robots: { index: false, follow: false },
+};
 
 export default async function DashboardPage() {
   const session = await auth();

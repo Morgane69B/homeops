@@ -16,16 +16,18 @@ export function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
-    const formData = new FormData();
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
     formData.set("name", name);
     formData.set("email", email);
     formData.set("password", password);
+    formData.set("renderedAt", String(renderedAt));
 
     const result = await registerUser(formData);
 
@@ -54,6 +56,17 @@ export function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="absolute -left-[9999px]" aria-hidden="true">
+        <label htmlFor="website">Site web</label>
+        <input
+          id="website"
+          name="website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
       <div className="space-y-1.5">
         <Label htmlFor="name">Nom</Label>
         <Input

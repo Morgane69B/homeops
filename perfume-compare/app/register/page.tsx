@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { RegisterForm } from "@/components/auth/register-form";
+
+export const metadata: Metadata = {
+  title: "Créer un compte | Essence",
+  description: "Créez votre compte Essence pour enregistrer vos parfums favoris.",
+  robots: { index: false, follow: true },
+};
 
 export default async function RegisterPage({
   searchParams,

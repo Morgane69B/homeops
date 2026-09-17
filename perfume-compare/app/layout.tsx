@@ -3,6 +3,7 @@ import { Geist_Mono, Montserrat, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { CookieConsent } from "@/components/layout/cookie-consent";
 import { SessionProvider } from "@/components/providers/session-provider";
 
 const montserrat = Montserrat({
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer />
+          <CookieConsent />
         </SessionProvider>
       </body>
     </html>

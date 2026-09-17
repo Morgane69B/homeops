@@ -17,6 +17,20 @@ export type RegisterResult = { error: string } | { success: true };
 export async function registerUser(
   formData: FormData,
 ): Promise<RegisterResult> {
+  // Honeypot: a field real users never see or fill. Bots that blindly fill
+  // every input trip it. Fail silently (generic error) rather than telling
+  // the bot exactly what gave it away.
+  if (formData.get("website")) {
+    return { error: "Une erreur est survenue. Veuillez réessayer." };
+  }
+
+  // Bots that submit instantly (no time to render/fill the form) get caught
+  // here; genuine users take at least a couple of seconds.
+  const renderedAt = Number(formData.get("renderedAt"));
+  if (Number.isFinite(renderedAt) && Date.now() - renderedAt < 1500) {
+    return { error: "Une erreur est survenue. Veuillez réessayer." };
+  }
+
   const parsed = RegisterSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

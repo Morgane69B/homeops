@@ -24,7 +24,7 @@ export function HeroCopy() {
         les marchands, explorez leur pyramide olfactive et composez une
         wishlist triée par famille.
       </p>
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+      <div className="mt-10 flex flex-col items-center gap-4">
         <Button
           size="lg"
           nativeButton={false}
@@ -34,15 +34,12 @@ export function HeroCopy() {
           Explorer le catalogue
           <ArrowRight className="size-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="lg"
-          nativeButton={false}
-          className="text-foreground/80 hover:bg-white/5 hover:text-gold"
-          render={<Link href="/guide" />}
+        <Link
+          href="/guide"
+          className="text-sm text-muted-foreground underline-offset-4 hover:text-gold hover:underline"
         >
-          Découvrir le guide
-        </Button>
+          Découvrir le guide du parfum
+        </Link>
       </div>
     </motion.div>
   );

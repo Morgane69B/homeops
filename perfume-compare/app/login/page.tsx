@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { LoginForm } from "@/components/auth/login-form";
+
+export const metadata: Metadata = {
+  title: "Connexion | Essence",
+  description: "Connectez-vous à votre compte Essence pour retrouver votre wishlist.",
+  robots: { index: false, follow: true },
+};
 
 export default async function LoginPage({
   searchParams,
