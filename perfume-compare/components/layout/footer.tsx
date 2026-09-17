@@ -10,15 +10,6 @@ const COLUMNS = [
     ],
   },
   {
-    title: "Marchands partenaires",
-    links: [
-      { href: "https://www.sephora.fr", label: "Sephora" },
-      { href: "https://www.flaconi.fr", label: "Flaconi" },
-      { href: "https://www.nocibe.fr", label: "Nocibé" },
-      { href: "https://www.primor.eu", label: "Primor" },
-    ],
-  },
-  {
     title: "Essence",
     links: [
       { href: "/dashboard", label: "Mon espace" },
@@ -32,7 +23,7 @@ export function Footer() {
   return (
     <footer className="border-t border-white/10 bg-luxury-black">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-12 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
+        <div className="grid gap-12 md:grid-cols-[1.3fr_1fr_1fr]">
           <div>
             <span className="font-display text-xl tracking-[0.2em] text-foreground uppercase">
               Essence
@@ -66,7 +57,7 @@ export function Footer() {
 
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-xs text-muted-foreground sm:flex-row">
           <p>© {new Date().getFullYear()} Essence. Tous droits réservés.</p>
-          <p>Les liens marchands sont des liens affiliés.</p>
+          <p>Les prix affichés sont fournis à titre indicatif.</p>
         </div>
       </div>
     </footer>

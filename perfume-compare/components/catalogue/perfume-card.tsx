@@ -26,7 +26,7 @@ export function PerfumeCard({
       href={`/parfums/${perfume.slug}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-colors hover:border-gold/30"
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-luxury-ink">
+      <div className="relative aspect-square overflow-hidden bg-luxury-ink">
         <Image
           src={image}
           alt={`${perfume.name} — ${perfume.brand}`}
