@@ -94,10 +94,13 @@ export default async function ParfumDetailPage({
             {perfume.description}
           </p>
 
-          <div className="mt-8 flex items-center gap-4">
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             {perfume.minPrice != null && (
               <span className="font-display text-2xl text-gold">
-                dès {perfume.minPrice.toFixed(2)} €
+                dès {perfume.minPrice.toFixed(2)} €{" "}
+                <span className="text-sm font-sans text-muted-foreground">
+                  / 50 ml
+                </span>
               </span>
             )}
             <WishlistButton

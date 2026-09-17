@@ -58,7 +58,7 @@ export function Footer() {
 
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-xs text-muted-foreground sm:flex-row">
           <p>© {new Date().getFullYear()} Essence. Tous droits réservés.</p>
-          <p>Les prix affichés sont fournis à titre indicatif.</p>
+          <p>Prix indicatifs pour un flacon de 50 ml, sauf mention contraire.</p>
         </div>
       </div>
     </footer>

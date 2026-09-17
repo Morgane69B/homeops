@@ -94,7 +94,8 @@ export async function updatePerfume(
     offerIds.map((offerId) => {
       const price = formData.get(`offerPrice_${offerId}`);
       const url = formData.get(`offerUrl_${offerId}`);
-      const data: { price?: number; affiliateUrl?: string } = {};
+      const volume = formData.get(`offerVolume_${offerId}`);
+      const data: { price?: number; affiliateUrl?: string; volumeMl?: number } = {};
 
       if (typeof price === "string" && price.trim() !== "") {
         const value = Number(price);
@@ -102,6 +103,10 @@ export async function updatePerfume(
       }
       if (typeof url === "string" && url.trim() !== "") {
         data.affiliateUrl = url.trim();
+      }
+      if (typeof volume === "string" && volume.trim() !== "") {
+        const value = Number(volume);
+        if (Number.isInteger(value) && value > 0) data.volumeMl = value;
       }
       if (Object.keys(data).length === 0) return null;
 

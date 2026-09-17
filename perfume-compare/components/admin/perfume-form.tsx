@@ -229,8 +229,17 @@ export function PerfumeForm({
                 <input type="hidden" name="offerId" value={offer.id} />
                 <div className="flex items-center gap-3">
                   <span className="flex-1 truncate text-foreground/80">
-                    {offer.merchantName} · {offer.volumeMl} ml
+                    {offer.merchantName}
                   </span>
+                  <Input
+                    type="number"
+                    step="1"
+                    min="1"
+                    name={`offerVolume_${offer.id}`}
+                    defaultValue={offer.volumeMl}
+                    className="w-20 border-white/10 bg-white/[0.03]"
+                  />
+                  <span className="text-muted-foreground">ml</span>
                   <Input
                     type="number"
                     step="0.01"

@@ -64,7 +64,8 @@ export default async function ParfumsPage({
 
           <p className="mt-6 text-sm text-muted-foreground">
             {perfumes.length} parfum{perfumes.length > 1 ? "s" : ""} trouvé
-            {perfumes.length > 1 ? "s" : ""}
+            {perfumes.length > 1 ? "s" : ""} · prix indiqués pour un flacon de
+            50 ml
           </p>
 
           {perfumes.length > 0 ? (
