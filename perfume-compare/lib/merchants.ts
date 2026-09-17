@@ -6,4 +6,5 @@ export const CORE_MERCHANT_NAMES = [
   "Parfum et Moi",
   "Primor",
   "MyOrigines",
+  "Flaconi",
 ] as const;
