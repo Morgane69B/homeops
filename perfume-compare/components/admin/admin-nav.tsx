@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { href: "/admin", label: "Parfums", match: (path: string) => path === "/admin" || path.startsWith("/admin/parfums") },
   { href: "/admin/articles", label: "Journal", match: (path: string) => path.startsWith("/admin/articles") },
-  { href: "/admin/familles", label: "Guide", match: (path: string) => path.startsWith("/admin/familles") },
+  { href: "/admin/familles", label: "Familles", match: (path: string) => path.startsWith("/admin/familles") },
+  { href: "/admin/guide", label: "Conseils", match: (path: string) => path.startsWith("/admin/guide") },
+  { href: "/admin/site", label: "Accueil", match: (path: string) => path.startsWith("/admin/site") },
   { href: "/admin/legal", label: "Légal", match: (path: string) => path.startsWith("/admin/legal") },
 ];
 

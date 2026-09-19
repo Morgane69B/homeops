@@ -341,3 +341,104 @@ export async function updateLegalPage(
   revalidatePath("/admin/legal");
   return { success: true, id: updated.id };
 }
+
+const GuideTipSchema = z.object({
+  title: z.string().min(1, "Le titre est requis."),
+  body: z.string().min(1, "Le texte est requis.").transform(normalizeNewlines),
+});
+
+export type GuideTipFormResult = { error: string } | { success: true; id: string };
+
+export async function createGuideTip(
+  formData: FormData,
+): Promise<GuideTipFormResult> {
+  await requireAdmin();
+
+  const parsed = GuideTipSchema.safeParse({
+    title: formData.get("title"),
+    body: formData.get("body"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const maxOrder = await prisma.guideTip.aggregate({ _max: { order: true } });
+  const created = await prisma.guideTip.create({
+    data: { ...parsed.data, order: (maxOrder._max.order ?? -1) + 1 },
+  });
+
+  revalidatePath("/guide");
+  revalidatePath("/admin/guide");
+  redirect("/admin/guide");
+}
+
+export async function updateGuideTip(
+  id: string,
+  formData: FormData,
+): Promise<GuideTipFormResult> {
+  await requireAdmin();
+
+  const parsed = GuideTipSchema.safeParse({
+    title: formData.get("title"),
+    body: formData.get("body"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const updated = await prisma.guideTip.update({ where: { id }, data: parsed.data });
+
+  revalidatePath("/guide");
+  revalidatePath("/admin/guide");
+  return { success: true, id: updated.id };
+}
+
+export async function deleteGuideTip(id: string) {
+  await requireAdmin();
+  await prisma.guideTip.delete({ where: { id } });
+  revalidatePath("/guide");
+  revalidatePath("/admin/guide");
+  redirect("/admin/guide");
+}
+
+const SiteSettingsSchema = z.object({
+  heroEyebrow: z.string().min(1, "Requis."),
+  heroTitle: z.string().min(1, "Requis."),
+  heroDescription: z.string().min(1, "Requis.").transform(normalizeNewlines),
+  heroCtaPrimary: z.string().min(1, "Requis."),
+  heroCtaSecondary: z.string().min(1, "Requis."),
+  pillar1Title: z.string().min(1, "Requis."),
+  pillar1Description: z.string().min(1, "Requis.").transform(normalizeNewlines),
+  pillar2Title: z.string().min(1, "Requis."),
+  pillar2Description: z.string().min(1, "Requis.").transform(normalizeNewlines),
+  pillar3Title: z.string().min(1, "Requis."),
+  pillar3Description: z.string().min(1, "Requis.").transform(normalizeNewlines),
+  familiesEyebrow: z.string().min(1, "Requis."),
+  familiesTitle: z.string().min(1, "Requis."),
+  footerTagline: z.string().min(1, "Requis.").transform(normalizeNewlines),
+});
+
+export type SiteSettingsFormResult = { error: string } | { success: true };
+
+export async function updateSiteSettings(
+  formData: FormData,
+): Promise<SiteSettingsFormResult> {
+  await requireAdmin();
+
+  const parsed = SiteSettingsSchema.safeParse(
+    Object.fromEntries(SiteSettingsSchema.keyof().options.map((key) => [key, formData.get(key)])),
+  );
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  await prisma.siteSettings.upsert({
+    where: { id: "singleton" },
+    update: parsed.data,
+    create: { id: "singleton", ...parsed.data },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/site");
+  return { success: true };
+}

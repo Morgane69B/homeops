@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSiteSettings } from "@/lib/site-settings";
 
 const COLUMNS = [
   {
@@ -20,7 +21,9 @@ const COLUMNS = [
   },
 ];
 
-export function Footer() {
+export async function Footer() {
+  const settings = await getSiteSettings();
+
   return (
     <footer className="border-t border-white/10 bg-luxury-black">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -30,8 +33,7 @@ export function Footer() {
               Essence
             </span>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              La comparaison de prix de parfums, pensée pour les amateurs
-              exigeants. Trouvez le meilleur prix, comprenez chaque note.
+              {settings.footerTagline}
             </p>
           </div>
 

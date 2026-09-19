@@ -5,7 +5,19 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function HeroCopy() {
+export function HeroCopy({
+  eyebrow,
+  title,
+  description,
+  ctaPrimary,
+  ctaSecondary,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaPrimary: string;
+  ctaSecondary: string;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -14,15 +26,13 @@ export function HeroCopy() {
       className="mx-auto max-w-2xl text-center"
     >
       <span className="text-xs tracking-[0.35em] text-gold uppercase">
-        Comparateur de parfums premium
+        {eyebrow}
       </span>
       <h1 className="mt-6 font-display text-5xl leading-[1.05] text-foreground sm:text-6xl lg:text-7xl">
-        L&apos;exception, au meilleur prix.
+        {title}
       </h1>
       <p className="mx-auto mt-6 max-w-lg text-base text-muted-foreground">
-        Comparez les prix des plus grandes maisons de parfumerie chez tous
-        les marchands, explorez leur pyramide olfactive et composez une
-        wishlist triée par famille.
+        {description}
       </p>
       <div className="mt-10 flex flex-col items-center gap-4">
         <Button
@@ -31,14 +41,14 @@ export function HeroCopy() {
           className="btn-shimmer bg-gold text-gold-foreground hover:bg-gold/90"
           render={<Link href="/parfums" />}
         >
-          Explorer le catalogue
+          {ctaPrimary}
           <ArrowRight className="size-4" />
         </Button>
         <Link
           href="/guide"
           className="text-sm text-muted-foreground underline-offset-4 hover:text-gold hover:underline"
         >
-          Découvrir le guide du parfum
+          {ctaSecondary}
         </Link>
       </div>
     </motion.div>

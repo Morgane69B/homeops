@@ -21,8 +21,23 @@ export async function generateMetadata({
   if (!article) return {};
 
   return {
-    title: `${article.title} | Essence`,
+    title: article.title,
     description: article.excerpt,
+    alternates: { canonical: `/blog/${article.slug}` },
+    openGraph: {
+      title: `${article.title} | Essence`,
+      description: article.excerpt,
+      url: `/blog/${article.slug}`,
+      type: "article",
+      publishedTime: article.createdAt.toISOString(),
+      ...(article.coverImage ? { images: [{ url: article.coverImage }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${article.title} | Essence`,
+      description: article.excerpt,
+      ...(article.coverImage ? { images: [article.coverImage] } : {}),
+    },
   };
 }
 
@@ -40,8 +55,23 @@ export default async function ArticlePage({
   const isAdmin = session?.user?.role === "ADMIN";
   const paragraphs = article.content.split("\n\n");
 
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.excerpt,
+    datePublished: article.createdAt.toISOString(),
+    ...(article.coverImage ? { image: [article.coverImage] } : {}),
+    author: { "@type": "Organization", name: "Essence" },
+  };
+
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <nav className="flex items-center gap-2 text-xs text-muted-foreground">
         <Link href="/blog" className="hover:text-gold">
           Journal

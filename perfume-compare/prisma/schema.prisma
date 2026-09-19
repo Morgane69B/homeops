@@ -164,6 +164,40 @@ model WishlistItem {
   @@unique([userId, perfumeId])
 }
 
+// --- Site content ---
+
+model SiteSettings {
+  id String @id @default("singleton")
+
+  heroEyebrow      String
+  heroTitle        String
+  heroDescription  String
+  heroCtaPrimary   String
+  heroCtaSecondary String
+
+  pillar1Title       String
+  pillar1Description String
+  pillar2Title       String
+  pillar2Description String
+  pillar3Title       String
+  pillar3Description String
+
+  familiesEyebrow String
+  familiesTitle   String
+
+  footerTagline String
+
+  updatedAt DateTime @updatedAt
+}
+
+model GuideTip {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
 // --- Legal ---
 
 model LegalPage {

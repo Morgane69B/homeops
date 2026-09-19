@@ -1,20 +1,23 @@
+import Link from "next/link";
 import type { Metadata } from "next";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { ConcentrationChart } from "@/components/guide/concentration-chart";
 import { FamilyGrid } from "@/components/guide/family-grid";
-import { TIPS } from "@/lib/guide-content";
 import { FadeIn } from "@/components/motion/fade-in";
 
 export const metadata: Metadata = {
   title: "Le Guide du Parfum | Essence",
   description:
     "Concentrations, familles olfactives et bons gestes d'usage : tout comprendre avant de choisir votre prochain parfum.",
+  alternates: { canonical: "/guide" },
 };
 
 export default async function GuidePage() {
-  const [families, session] = await Promise.all([
+  const [families, tips, session] = await Promise.all([
     prisma.olfactoryFamily.findMany({ orderBy: { name: "asc" } }),
+    prisma.guideTip.findMany({ orderBy: { order: "asc" } }),
     auth(),
   ]);
   const isAdmin = session?.user?.role === "ADMIN";
@@ -76,21 +79,42 @@ export default async function GuidePage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-        <FadeIn>
-          <span className="text-xs tracking-[0.3em] text-gold uppercase">
-            Bon usage
-          </span>
-          <h2 className="mt-3 font-display text-3xl text-foreground">
-            Appliquer, conserver, choisir
-          </h2>
-        </FadeIn>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <FadeIn>
+            <span className="text-xs tracking-[0.3em] text-gold uppercase">
+              Tout savoir
+            </span>
+            <h2 className="mt-3 font-display text-3xl text-foreground">
+              Appliquer, conserver, choisir
+            </h2>
+          </FadeIn>
+          {isAdmin && (
+            <Link
+              href="/admin/guide/new"
+              className="flex items-center gap-1.5 rounded-full bg-gold px-4 py-2 text-sm font-medium text-gold-foreground transition-colors hover:bg-gold/90"
+            >
+              <Plus className="size-4" />
+              Nouveau conseil
+            </Link>
+          )}
+        </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
-          {TIPS.map((tip, i) => (
-            <FadeIn key={tip.title} delay={i * 0.08}>
+          {tips.map((tip, i) => (
+            <FadeIn key={tip.id} delay={i * 0.06}>
               <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-                <h3 className="font-display text-lg text-foreground">
-                  {tip.title}
-                </h3>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="font-display text-lg text-foreground">
+                    {tip.title}
+                  </h3>
+                  {isAdmin && (
+                    <Link
+                      href={`/admin/guide/${tip.id}`}
+                      className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-gold hover:underline"
+                    >
+                      Modifier
+                    </Link>
+                  )}
+                </div>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {tip.body}
                 </p>

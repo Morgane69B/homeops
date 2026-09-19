@@ -21,10 +21,46 @@ const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://essence-opal.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Essence — Comparateur de Parfums",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Essence — Comparateur de Parfums",
+    template: "%s | Essence",
+  },
   description:
     "Plateforme premium de comparaison de prix de parfums, guide olfactif et blog.",
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: "Essence",
+    title: "Essence — Comparateur de Parfums",
+    description:
+      "Plateforme premium de comparaison de prix de parfums, guide olfactif et blog.",
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Essence — Comparateur de Parfums",
+    description:
+      "Plateforme premium de comparaison de prix de parfums, guide olfactif et blog.",
+  },
+  robots: { index: true, follow: true },
+};
+
+const WEBSITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Essence",
+  url: SITE_URL,
+  description:
+    "Plateforme premium de comparaison de prix de parfums, guide olfactif et blog.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${SITE_URL}/parfums?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -34,6 +70,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`dark ${montserrat.variable} ${geistMono.variable} ${playfairDisplay.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSON_LD) }}
+        />
         <SessionProvider>
           <Navbar />
           <main className="flex-1">{children}</main>

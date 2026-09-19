@@ -8,7 +8,8 @@ import { FadeIn } from "@/components/motion/fade-in";
 export const metadata: Metadata = {
   title: "Le Journal | Essence",
   description:
-    "Sélections, focus ingrédients et conseils de parfumeurs pour aiguiser votre nez avant de comparer les prix.",
+    "Sélections, focus ingrédients et guides pratiques pour aiguiser votre nez avant de comparer les prix.",
+  alternates: { canonical: "/blog" },
 };
 
 export default async function BlogPage() {
@@ -26,8 +27,8 @@ export default async function BlogPage() {
             Le journal Essence
           </h1>
           <p className="mt-3 max-w-xl text-muted-foreground">
-            Sélections, focus ingrédients et conseils de parfumeurs — pour
-            aiguiser votre nez avant de comparer les prix.
+            Sélections, focus ingrédients et guides pratiques — pour aiguiser
+            votre nez avant de comparer les prix.
           </p>
         </div>
         {isAdmin && (

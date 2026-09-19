@@ -34,9 +34,26 @@ export async function generateMetadata({
   const perfume = await getPerfumeBySlug(slug);
   if (!perfume) return {};
 
+  const image = resolvePerfumeImage(perfume);
+  const title = `${perfume.name} — ${perfume.brand}`;
+
   return {
-    title: `${perfume.name} — ${perfume.brand} | Essence`,
+    title,
     description: perfume.description,
+    alternates: { canonical: `/parfums/${perfume.slug}` },
+    openGraph: {
+      title: `${title} | Essence`,
+      description: perfume.description,
+      url: `/parfums/${perfume.slug}`,
+      type: "website",
+      images: [{ url: image }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | Essence`,
+      description: perfume.description,
+      images: [image],
+    },
   };
 }
 
@@ -56,8 +73,44 @@ export default async function ParfumDetailPage({
   const image = resolvePerfumeImage(perfume);
   const isAdmin = session?.user?.role === "ADMIN";
 
+  const numericOffers = perfume.offers.map((o) => ({ ...o, price: Number(o.price) }));
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: perfume.name,
+    brand: { "@type": "Brand", name: perfume.brand },
+    description: perfume.description,
+    image,
+    ...(numericOffers.length > 0
+      ? {
+          offers: {
+            "@type": "AggregateOffer",
+            priceCurrency: "EUR",
+            lowPrice: Math.min(...numericOffers.map((o) => o.price)),
+            highPrice: Math.max(...numericOffers.map((o) => o.price)),
+            offerCount: numericOffers.length,
+            offers: numericOffers.map((o) => ({
+              "@type": "Offer",
+              price: o.price,
+              priceCurrency: "EUR",
+              url: o.affiliateUrl,
+              availability: o.stock
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+              seller: { "@type": "Organization", name: o.merchant.name },
+            })),
+          },
+        }
+      : {}),
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       <nav className="flex items-center gap-2 text-xs text-muted-foreground">
         <Link href="/parfums" className="hover:text-gold">
           Catalogue

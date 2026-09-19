@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   title: "Catalogue — Tous les parfums | Essence",
   description:
     "Comparez les prix de dizaines de parfums de grandes maisons et marques de niche. Filtrez par famille olfactive, budget ou notes de composition.",
+  alternates: { canonical: "/parfums" },
 };
 
 export default async function ParfumsPage({

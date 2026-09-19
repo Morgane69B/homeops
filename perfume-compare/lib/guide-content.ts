@@ -42,22 +42,3 @@ export const FAMILY_SUBFAMILIES: Record<string, string[]> = {
   chypree: ["Chypre floral", "Chypre fruité", "Chypre cuiré"],
   cuir: ["Cuir floral", "Cuir tabac", "Cuir animal"],
 };
-
-export const TIPS = [
-  {
-    title: "Où appliquer",
-    body: "Sur les points de pulsation — poignets, cou, intérieur des coudes — où la chaleur du corps diffuse le parfum. Ne frottez jamais les poignets l'un contre l'autre : cela casse les molécules de tête.",
-  },
-  {
-    title: "Comment conserver",
-    body: "À l'abri de la lumière et des variations de température, idéalement dans sa boîte. La salle de bain, humide et chaude, est le pire endroit pour un flacon.",
-  },
-  {
-    title: "Selon la saison",
-    body: "Les agrumes et notes fraîches tiennent mieux la chaleur estivale ; les orientaux et boisés denses révèlent toute leur profondeur par temps froid.",
-  },
-  {
-    title: "Selon l'occasion",
-    body: "Une Eau de Toilette légère convient au bureau ; réservez les Extraits et compositions plus denses aux soirées, où un sillage plus affirmé a sa place.",
-  },
-];
