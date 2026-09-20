@@ -9,7 +9,6 @@ import { SearchBar } from "@/components/catalogue/search-bar";
 import { SortSelect } from "@/components/catalogue/sort-select";
 import { FiltersContent } from "@/components/catalogue/filters-content";
 import { MobileFilters } from "@/components/catalogue/mobile-filters";
-import { NoteComposer } from "@/components/catalogue/note-composer";
 import { PerfumeCard } from "@/components/catalogue/perfume-card";
 import { getWishlistedIds } from "@/lib/actions/wishlist";
 
@@ -26,7 +25,7 @@ export default async function ParfumsPage({
   const params = await searchParams;
   const filters = parseCatalogueParams(params);
 
-  const [priceBounds, { families, notes }, perfumes, wishlistedIds] =
+  const [priceBounds, { families }, perfumes, wishlistedIds] =
     await Promise.all([
       getPriceBounds(),
       getFilterOptions(),
@@ -42,10 +41,6 @@ export default async function ParfumsPage({
       <h1 className="mt-3 font-display text-4xl text-foreground">
         Tous les parfums
       </h1>
-
-      <div className="mt-10">
-        <NoteComposer notes={notes} />
-      </div>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[260px_1fr]">
         <aside className="hidden lg:block">

@@ -52,6 +52,139 @@ function parsePerfumeForm(formData: FormData) {
   });
 }
 
+function readOfferFields(formData: FormData, prefixId: string) {
+  const price = formData.get(`offerPrice_${prefixId}`) ?? formData.get(`corePrice_${prefixId}`);
+  const url = formData.get(`offerUrl_${prefixId}`) ?? formData.get(`coreUrl_${prefixId}`);
+  const volume = formData.get(`offerVolume_${prefixId}`) ?? formData.get(`coreVolume_${prefixId}`);
+  const fields: { price?: number; affiliateUrl?: string; volumeMl?: number } = {};
+  if (typeof price === "string" && price.trim() !== "") {
+    const value = Number(price);
+    if (Number.isFinite(value) && value >= 0) fields.price = value;
+  }
+  if (typeof url === "string" && url.trim() !== "") {
+    fields.affiliateUrl = url.trim();
+  }
+  if (typeof volume === "string" && volume.trim() !== "") {
+    const value = Number(volume);
+    if (Number.isInteger(value) && value > 0) fields.volumeMl = value;
+  }
+  return fields;
+}
+
+/**
+ * Applies the merchants section (fixed roster + official brand site + any
+ * extra/legacy offers) of the perfume form to a perfume that already has an
+ * id — used by both create (right after the row is inserted) and update.
+ */
+async function applyOfferChanges(perfumeId: string, brand: string, formData: FormData) {
+  const coreMerchants = await prisma.merchant.findMany({
+    where: { name: { in: [...CORE_MERCHANT_NAMES] } },
+  });
+  const activeCoreMerchantIds = new Set(formData.getAll("activeCoreMerchantId"));
+  const currentOffers = await prisma.priceOffer.findMany({ where: { perfumeId } });
+  const currentOfferByMerchantId = new Map(currentOffers.map((o) => [o.merchantId, o]));
+
+  await Promise.all(
+    coreMerchants.map((merchant) => {
+      const existing = currentOfferByMerchantId.get(merchant.id);
+      const isActive = activeCoreMerchantIds.has(merchant.id);
+
+      if (!isActive) {
+        return existing ? prisma.priceOffer.delete({ where: { id: existing.id } }) : null;
+      }
+
+      const fields = readOfferFields(formData, merchant.id);
+      if (existing) {
+        return Object.keys(fields).length
+          ? prisma.priceOffer.update({ where: { id: existing.id }, data: fields })
+          : null;
+      }
+      return prisma.priceOffer.create({
+        data: {
+          perfumeId,
+          merchantId: merchant.id,
+          price: fields.price ?? 0,
+          volumeMl: fields.volumeMl ?? 50,
+          stock: true,
+          affiliateUrl: fields.affiliateUrl || merchant.siteUrl,
+        },
+      });
+    }),
+  );
+
+  // The brand's own official site: always pinned first on the public price
+  // table (see PriceTable), independent of the fixed roster and its price.
+  const officialActive = formData.get("officialActive") === "1";
+  const existingOfficial = currentOffers.find((o) => o.isOfficial);
+  if (!officialActive) {
+    if (existingOfficial) {
+      await prisma.priceOffer.delete({ where: { id: existingOfficial.id } });
+    }
+  } else {
+    const officialFields = {
+      price: (() => {
+        const v = formData.get("officialPrice");
+        const n = typeof v === "string" ? Number(v) : NaN;
+        return Number.isFinite(n) && n >= 0 ? n : (existingOfficial ? undefined : 0);
+      })(),
+      affiliateUrl: (() => {
+        const v = formData.get("officialUrl");
+        return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
+      })(),
+      volumeMl: (() => {
+        const v = formData.get("officialVolume");
+        const n = typeof v === "string" ? Number(v) : NaN;
+        return Number.isInteger(n) && n > 0 ? n : (existingOfficial ? undefined : 50);
+      })(),
+    };
+    const officialMerchant = await prisma.merchant.upsert({
+      where: { name: brand },
+      update: {},
+      create: { name: brand, siteUrl: officialFields.affiliateUrl ?? "" },
+    });
+    if (existingOfficial) {
+      const updateData = Object.fromEntries(
+        Object.entries(officialFields).filter(([, v]) => v !== undefined),
+      );
+      if (Object.keys(updateData).length) {
+        await prisma.priceOffer.update({ where: { id: existingOfficial.id }, data: updateData });
+      }
+    } else {
+      await prisma.priceOffer.create({
+        data: {
+          perfumeId,
+          merchantId: officialMerchant.id,
+          price: officialFields.price ?? 0,
+          volumeMl: officialFields.volumeMl ?? 50,
+          stock: true,
+          isOfficial: true,
+          affiliateUrl: officialFields.affiliateUrl || officialMerchant.siteUrl,
+        },
+      });
+    }
+  }
+
+  // Anything outside the fixed roster and the official offer (e.g. a
+  // merchant seeded before it existed): still editable, removed if its row
+  // was deleted client-side.
+  const extraOfferIds = formData.getAll("offerId") as string[];
+  const coreMerchantIds = new Set(coreMerchants.map((m) => m.id));
+  const extraCurrentOffers = currentOffers.filter(
+    (o) => !o.isOfficial && !coreMerchantIds.has(o.merchantId),
+  );
+
+  await Promise.all([
+    ...extraOfferIds.map((offerId) => {
+      const fields = readOfferFields(formData, offerId);
+      if (Object.keys(fields).length === 0) return null;
+      return prisma.priceOffer.update({ where: { id: offerId }, data: fields });
+    }),
+    ...extraCurrentOffers
+      .filter((o) => !extraOfferIds.includes(o.id))
+      .map((o) => prisma.priceOffer.delete({ where: { id: o.id } })),
+  ]);
+}
+
 export async function createPerfume(
   formData: FormData,
 ): Promise<PerfumeFormResult> {
@@ -71,9 +204,18 @@ export async function createPerfume(
     slug = `${baseSlug}-${suffix}`;
   }
 
+  const noteIds = formData.getAll("noteId") as string[];
+
   const created = await prisma.perfume.create({
-    data: { ...data, slug, imageUrl: data.imageUrl || null },
+    data: {
+      ...data,
+      slug,
+      imageUrl: data.imageUrl || null,
+      notes: { connect: noteIds.map((noteId) => ({ id: noteId })) },
+    },
   });
+
+  await applyOfferChanges(created.id, data.brand, formData);
 
   revalidatePath("/parfums");
   revalidatePath("/admin");
@@ -91,84 +233,18 @@ export async function updatePerfume(
     return { error: parsed.error.issues[0].message };
   }
   const data = parsed.data;
+  const noteIds = formData.getAll("noteId") as string[];
 
   const perfume = await prisma.perfume.update({
     where: { id },
-    data: { ...data, imageUrl: data.imageUrl || null },
+    data: {
+      ...data,
+      imageUrl: data.imageUrl || null,
+      notes: { set: noteIds.map((noteId) => ({ id: noteId })) },
+    },
   });
 
-  function readOfferFields(prefixId: string) {
-    const price = formData.get(`offerPrice_${prefixId}`) ?? formData.get(`corePrice_${prefixId}`);
-    const url = formData.get(`offerUrl_${prefixId}`) ?? formData.get(`coreUrl_${prefixId}`);
-    const volume = formData.get(`offerVolume_${prefixId}`) ?? formData.get(`coreVolume_${prefixId}`);
-    const fields: { price?: number; affiliateUrl?: string; volumeMl?: number } = {};
-    if (typeof price === "string" && price.trim() !== "") {
-      const value = Number(price);
-      if (Number.isFinite(value) && value >= 0) fields.price = value;
-    }
-    if (typeof url === "string" && url.trim() !== "") {
-      fields.affiliateUrl = url.trim();
-    }
-    if (typeof volume === "string" && volume.trim() !== "") {
-      const value = Number(volume);
-      if (Number.isInteger(value) && value > 0) fields.volumeMl = value;
-    }
-    return fields;
-  }
-
-  // Fixed roster (Sephora, Nocibé, Parfumdreams, Parfum et Moi, Primor,
-  // MyOrigines): the admin toggles each on/off per perfume with +/×.
-  const coreMerchants = await prisma.merchant.findMany({
-    where: { name: { in: [...CORE_MERCHANT_NAMES] } },
-  });
-  const activeCoreMerchantIds = new Set(formData.getAll("activeCoreMerchantId"));
-  const currentOffers = await prisma.priceOffer.findMany({ where: { perfumeId: id } });
-  const currentOfferByMerchantId = new Map(currentOffers.map((o) => [o.merchantId, o]));
-
-  await Promise.all(
-    coreMerchants.map((merchant) => {
-      const existing = currentOfferByMerchantId.get(merchant.id);
-      const isActive = activeCoreMerchantIds.has(merchant.id);
-
-      if (!isActive) {
-        return existing ? prisma.priceOffer.delete({ where: { id: existing.id } }) : null;
-      }
-
-      const fields = readOfferFields(merchant.id);
-      if (existing) {
-        return Object.keys(fields).length
-          ? prisma.priceOffer.update({ where: { id: existing.id }, data: fields })
-          : null;
-      }
-      return prisma.priceOffer.create({
-        data: {
-          perfumeId: id,
-          merchantId: merchant.id,
-          price: fields.price ?? 0,
-          volumeMl: fields.volumeMl ?? 50,
-          stock: true,
-          affiliateUrl: fields.affiliateUrl || merchant.siteUrl,
-        },
-      });
-    }),
-  );
-
-  // Anything outside the fixed roster (e.g. a merchant seeded before it
-  // existed): still editable, and removed if its row was deleted client-side.
-  const extraOfferIds = formData.getAll("offerId") as string[];
-  const coreMerchantIds = new Set(coreMerchants.map((m) => m.id));
-  const extraCurrentOffers = currentOffers.filter((o) => !coreMerchantIds.has(o.merchantId));
-
-  await Promise.all([
-    ...extraOfferIds.map((offerId) => {
-      const fields = readOfferFields(offerId);
-      if (Object.keys(fields).length === 0) return null;
-      return prisma.priceOffer.update({ where: { id: offerId }, data: fields });
-    }),
-    ...extraCurrentOffers
-      .filter((o) => !extraOfferIds.includes(o.id))
-      .map((o) => prisma.priceOffer.delete({ where: { id: o.id } })),
-  ]);
+  await applyOfferChanges(id, data.brand, formData);
 
   revalidatePath("/parfums");
   revalidatePath(`/parfums/${perfume.slug}`);

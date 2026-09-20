@@ -21,7 +21,7 @@ export async function generateMetadata({
   if (!article) return {};
 
   return {
-    title: article.title,
+    title: `${article.title} | Essence`,
     description: article.excerpt,
     alternates: { canonical: `/blog/${article.slug}` },
     openGraph: {

@@ -12,20 +12,49 @@ type Offer = {
   volumeMl: number;
   stock: boolean;
   affiliateUrl: string;
+  isOfficial: boolean;
+  updatedAt: Date | string;
   merchant: { id: string; name: string; siteUrl: string };
 };
+
+function formatRelativeTime(value: Date | string): string {
+  const date = value instanceof Date ? value : new Date(value);
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+  if (seconds < 60) return "à l'instant";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.round(hours / 24);
+  if (days === 1) return "hier";
+  if (days < 30) return `il y a ${days} j`;
+  const months = Math.round(days / 30);
+  if (months < 12) return `il y a ${months} mois`;
+  const years = Math.round(days / 365);
+  return `il y a ${years} an${years > 1 ? "s" : ""}`;
+}
 
 export function PriceTable({ offers }: { offers: Offer[] }) {
   const [sortBy, setSortBy] = useState<"prix" | "disponibilite">("prix");
 
+  const mostRecentUpdate = useMemo(() => {
+    if (offers.length === 0) return null;
+    const times = offers.map((o) =>
+      (o.updatedAt instanceof Date ? o.updatedAt : new Date(o.updatedAt)).getTime(),
+    );
+    return new Date(Math.max(...times));
+  }, [offers]);
+
   const sorted = useMemo(() => {
-    const copy = [...offers];
+    const official = offers.filter((o) => o.isOfficial);
+    const rest = offers.filter((o) => !o.isOfficial);
     if (sortBy === "prix") {
-      copy.sort((a, b) => Number(a.price) - Number(b.price));
+      rest.sort((a, b) => Number(a.price) - Number(b.price));
     } else {
-      copy.sort((a, b) => Number(b.stock) - Number(a.stock));
+      rest.sort((a, b) => Number(b.stock) - Number(a.stock));
     }
-    return copy;
+    // The official brand site always leads the list, regardless of price.
+    return [...official, ...rest];
   }, [offers, sortBy]);
 
   const bestPriceId = useMemo(() => {
@@ -46,10 +75,17 @@ export function PriceTable({ offers }: { offers: Offer[] }) {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10">
-      <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-5 py-3">
-        <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-          {offers.length} marchand{offers.length > 1 ? "s" : ""}
-        </span>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-white/10 bg-white/[0.03] px-5 py-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+            {offers.length} marchand{offers.length > 1 ? "s" : ""}
+          </span>
+          {mostRecentUpdate && (
+            <span className="text-xs text-muted-foreground">
+              · Prix mis à jour {formatRelativeTime(mostRecentUpdate)}
+            </span>
+          )}
+        </div>
         <div className="flex gap-1 text-xs">
           <button
             onClick={() => setSortBy("prix")}
@@ -80,7 +116,10 @@ export function PriceTable({ offers }: { offers: Offer[] }) {
         {sorted.map((offer) => (
           <div
             key={offer.id}
-            className="flex flex-col gap-3 bg-white/[0.02] p-5 sm:flex-row sm:items-center sm:justify-between"
+            className={cn(
+              "flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between",
+              offer.isOfficial ? "bg-gold/[0.06]" : "bg-white/[0.02]",
+            )}
           >
             <div className="flex items-center gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-background/60">
@@ -88,7 +127,7 @@ export function PriceTable({ offers }: { offers: Offer[] }) {
               </span>
               <div>
                 <p className="text-sm text-foreground">{offer.merchant.name}</p>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>{offer.volumeMl} ml</span>
                   <span>·</span>
                   <span
@@ -98,6 +137,15 @@ export function PriceTable({ offers }: { offers: Offer[] }) {
                   >
                     {offer.stock ? "En stock" : "Rupture de stock"}
                   </span>
+                  <span>·</span>
+                  <span title={new Date(offer.updatedAt).toLocaleString("fr-FR")}>
+                    {formatRelativeTime(offer.updatedAt)}
+                  </span>
+                  {offer.isOfficial && (
+                    <Badge className="border-gold/30 bg-gold/10 text-gold">
+                      Site officiel de la marque
+                    </Badge>
+                  )}
                   {offer.id === bestPriceId && (
                     <Badge className="border-gold/30 bg-gold/10 text-gold">
                       Meilleur prix

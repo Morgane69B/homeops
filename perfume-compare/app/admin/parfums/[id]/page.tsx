@@ -8,14 +8,21 @@ export default async function EditPerfumePage({
 }: PageProps<"/admin/parfums/[id]">) {
   const { id } = await params;
 
-  const [perfume, families, coreMerchantRows] = await Promise.all([
+  const [perfume, families, allNotes, coreMerchantRows] = await Promise.all([
     prisma.perfume.findUnique({
       where: { id },
-      include: { offers: { include: { merchant: true }, orderBy: { volumeMl: "asc" } } },
+      include: {
+        offers: { include: { merchant: true }, orderBy: { volumeMl: "asc" } },
+        notes: { select: { id: true } },
+      },
     }),
     prisma.olfactoryFamily.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
+    }),
+    prisma.note.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, category: true },
     }),
     prisma.merchant.findMany({
       where: { name: { in: [...CORE_MERCHANT_NAMES] } },
@@ -49,10 +56,25 @@ export default async function EditPerfumePage({
     };
   });
 
-  // Anything outside the fixed roster (e.g. a merchant seeded before this
-  // roster existed) still shows up, editable and removable, below it.
+  // The brand's own official site, if the admin has added one: always shown
+  // pinned above every other offer on the public price table.
+  const officialOfferRow = perfume.offers.find((o) => o.isOfficial);
+  const officialOffer = officialOfferRow
+    ? {
+        id: officialOfferRow.id,
+        price: Number(officialOfferRow.price),
+        volumeMl: officialOfferRow.volumeMl,
+        affiliateUrl: officialOfferRow.affiliateUrl,
+      }
+    : null;
+
+  // Anything outside the fixed roster and not the official offer (e.g. a
+  // merchant seeded before this roster existed) still shows up below it.
   const extraOffers = perfume.offers
-    .filter((o) => !CORE_MERCHANT_NAMES.includes(o.merchant.name as never))
+    .filter(
+      (o) =>
+        !o.isOfficial && !CORE_MERCHANT_NAMES.includes(o.merchant.name as never),
+    )
     .map((o) => ({
       id: o.id,
       price: Number(o.price),
@@ -70,6 +92,8 @@ export default async function EditPerfumePage({
         <PerfumeForm
           mode="edit"
           families={families}
+          allNotes={allNotes}
+          coreMerchants={coreMerchants}
           perfume={{
             id: perfume.id,
             name: perfume.name,
@@ -79,7 +103,8 @@ export default async function EditPerfumePage({
             mainFamilyId: perfume.mainFamilyId,
             description: perfume.description,
             imageUrl: perfume.imageUrl,
-            coreMerchants,
+            noteIds: perfume.notes.map((n) => n.id),
+            officialOffer,
             extraOffers,
           }}
         />

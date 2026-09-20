@@ -38,7 +38,7 @@ export async function generateMetadata({
   const title = `${perfume.name} — ${perfume.brand}`;
 
   return {
-    title,
+    title: `${title} | Essence`,
     description: perfume.description,
     alternates: { canonical: `/parfums/${perfume.slug}` },
     openGraph: {

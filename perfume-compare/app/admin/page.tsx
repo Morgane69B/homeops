@@ -7,7 +7,7 @@ import { resolvePerfumeImage } from "@/lib/product-image";
 export default async function AdminPerfumesPage() {
   const perfumes = await prisma.perfume.findMany({
     include: { mainFamily: true },
-    orderBy: { name: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
   return (

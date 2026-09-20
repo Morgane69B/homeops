@@ -25,10 +25,7 @@ const SITE_URL = "https://essence-opal.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: {
-    default: "Essence — Comparateur de Parfums",
-    template: "%s | Essence",
-  },
+  title: "Essence — Comparateur de Parfums",
   description:
     "Plateforme premium de comparaison de prix de parfums, guide olfactif et blog.",
   openGraph: {

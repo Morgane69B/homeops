@@ -17,10 +17,19 @@ export type ParsedCatalogueFilters = {
   notes: string[];
   prixMin: number | null;
   prixMax: number | null;
+  genre: string | null;
+  concentration: string | null;
   tri: SortOption;
 };
 
 const SORT_OPTIONS: SortOption[] = ["prix-asc", "prix-desc", "nouveaute", "nom"];
+const GENRE_OPTIONS = ["HOMME", "FEMME", "MIXTE"];
+const CONCENTRATION_OPTIONS = [
+  "EXTRAIT_DE_PARFUM",
+  "EAU_DE_PARFUM",
+  "EAU_DE_TOILETTE",
+  "EAU_DE_COLOGNE",
+];
 
 export function parseCatalogueParams(
   params: CatalogueSearchParams,
@@ -31,6 +40,8 @@ export function parseCatalogueParams(
   const prixMin = first(params.prixMin);
   const prixMax = first(params.prixMax);
   const triRaw = first(params.tri);
+  const genreRaw = first(params.genre);
+  const concentrationRaw = first(params.concentration);
 
   const tri = SORT_OPTIONS.includes(triRaw as SortOption)
     ? (triRaw as SortOption)
@@ -42,6 +53,11 @@ export function parseCatalogueParams(
     notes: notes ? notes.split(",").filter(Boolean) : [],
     prixMin: prixMin ? Number(prixMin) : null,
     prixMax: prixMax ? Number(prixMax) : null,
+    genre: genreRaw && GENRE_OPTIONS.includes(genreRaw) ? genreRaw : null,
+    concentration:
+      concentrationRaw && CONCENTRATION_OPTIONS.includes(concentrationRaw)
+        ? concentrationRaw
+        : null,
     tri,
   };
 }
@@ -97,6 +113,10 @@ export async function getCatalogue(filters: ParsedCatalogueFilters) {
               },
             },
           }
+        : {},
+      filters.genre ? { gender: filters.genre as Prisma.EnumGenderFilter["equals"] } : {},
+      filters.concentration
+        ? { concentration: filters.concentration as Prisma.EnumConcentrationFilter["equals"] }
         : {},
     ],
   };

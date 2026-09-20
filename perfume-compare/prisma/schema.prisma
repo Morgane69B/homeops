@@ -142,6 +142,7 @@ model PriceOffer {
   volumeMl     Int
   stock        Boolean  @default(true)
   affiliateUrl String
+  isOfficial   Boolean  @default(false)
   updatedAt    DateTime @updatedAt
 
   perfumeId  String

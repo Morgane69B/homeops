@@ -5,7 +5,7 @@ import { getFilterOptions } from "@/lib/catalogue";
 import { getSiteSettings } from "@/lib/site-settings";
 import { auth } from "@/auth";
 import { HeroCopy } from "@/components/home/hero-copy";
-import { NoteComposer } from "@/components/catalogue/note-composer";
+import { QuickFilters } from "@/components/home/quick-filters";
 import { FadeIn } from "@/components/motion/fade-in";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [{ families, notes }, settings, session] = await Promise.all([
+  const [{ families }, settings, session] = await Promise.all([
     getFilterOptions(),
     getSiteSettings(),
     auth(),
@@ -58,10 +58,22 @@ export default async function Home() {
             ctaPrimary={settings.heroCtaPrimary}
             ctaSecondary={settings.heroCtaSecondary}
           />
+        </div>
+      </section>
 
-          <FadeIn delay={0.15} className="mt-14">
-            <NoteComposer notes={notes} target="/parfums" />
+      <section className="border-b border-white/10 bg-luxury-black/40">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <FadeIn>
+            <span className="text-xs tracking-[0.3em] text-gold uppercase">
+              Recherche express
+            </span>
+            <h2 className="mt-3 font-display text-2xl text-foreground">
+              Filtrez en un clic
+            </h2>
           </FadeIn>
+          <div className="mt-8">
+            <QuickFilters />
+          </div>
         </div>
       </section>
 
